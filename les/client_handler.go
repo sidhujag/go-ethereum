@@ -472,7 +472,6 @@ func (d *downloaderPeerNotify) registerPeer(p *serverPeer) {
 		handler: h,
 		peer:    p,
 	}
-	// SYSCOIN
 	h.downloader.RegisterLightPeer(p.id, eth.ETH65, pc)
 }
 
