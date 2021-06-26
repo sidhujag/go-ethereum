@@ -211,6 +211,10 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 	if chainConfig.Clique != nil {
 		return clique.New(chainConfig.Clique, db)
 	}
+	// SYSCOIN
+	if chainConfig.ChainID == params.PolygonChainConfig.ChainID || chainConfig.ChainID == params.TanenbaumChainConfig.ChainID {
+		config.PowMode = ethash.ModeNEVM
+	}
 	// Otherwise assume proof-of-work
 	switch config.PowMode {
 	case ethash.ModeFake:
@@ -235,6 +239,7 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		DatasetsLockMmap: config.DatasetsLockMmap,
 		NotifyFull:       config.NotifyFull,
 	}, notify, noverify)
+
 	engine.SetThreads(-1) // Disable CPU mining
 	return engine
 }

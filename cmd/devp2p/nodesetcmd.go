@@ -238,6 +238,8 @@ func ethFilter(args []string) (nodeFilter, error) {
 	// SYSCOIN
 	case "polygon":
 		filter = forkid.NewStaticFilter(params.PolygonChainConfig, params.PolygonGenesisHash)
+	case "tanenbaum":
+		filter = forkid.NewStaticFilter(params.TanenbaumChainConfig, params.TanenbaumGenesisHash)
 	default:
 		return nil, fmt.Errorf("unknown network %q", args[0])
 	}

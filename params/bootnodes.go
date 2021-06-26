@@ -78,6 +78,9 @@ var CalaverasBootnodes = []string{
 var PolygonBootnodes = []string{
 	"",
 }
+var TanenbaumBootnodes = []string{
+	"",
+}
 
 var V5Bootnodes = []string{
 	// Teku team's bootnode
@@ -114,7 +117,9 @@ func KnownDNSNetwork(genesis common.Hash, protocol string) string {
 	case GoerliGenesisHash:
 		net = "goerli"
 	case PolygonGenesisHash:
-		net = "polygon"		
+		net = "polygon"	
+	case TanenbaumGenesisHash:
+		net = "tanenbaum"		
 	default:
 		return ""
 	}

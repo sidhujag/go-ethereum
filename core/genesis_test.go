@@ -194,6 +194,10 @@ func TestGenesisHashes(t *testing.T) {
 			genesis: DefaultPolygonGenesisBlock(),
 			hash:    params.PolygonGenesisHash,
 		},
+		{
+			genesis: DefaultTanenbaumGenesisBlock(),
+			hash:    params.TanenbaumGenesisHash,
+		},
 	}
 	for i, c := range cases {
 		b := c.genesis.MustCommit(rawdb.NewMemoryDatabase())

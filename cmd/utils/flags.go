@@ -159,6 +159,10 @@ var (
 		Name:  "polygon",
 		Usage: "Polygon network: pre-configured NEVM-based polygon network.",
 	}
+	TanenbaumFlag = cli.BoolFlag{
+		Name:  "tanenbaum",
+		Usage: "Tanenbaum network: pre-configured NEVM-based Tanenbaum test network.",
+	}
 	RinkebyFlag = cli.BoolFlag{
 		Name:  "rinkeby",
 		Usage: "Rinkeby network: pre-configured proof-of-authority test network",
@@ -803,6 +807,9 @@ func MakeDataDir(ctx *cli.Context) string {
 		if ctx.GlobalBool(PolygonFlag.Name) {
 			return filepath.Join(path, "polygon")
 		}
+		if ctx.GlobalBool(TanenbaumFlag.Name) {
+			return filepath.Join(path, "tanenbaum")
+		}
 		return path
 	}
 	Fatalf("Cannot determine default data directory, please set manually (--datadir)")
@@ -859,6 +866,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 		urls = params.CalaverasBootnodes
 	case ctx.GlobalBool(PolygonFlag.Name):
 		urls = params.PolygonBootnodes
+	case ctx.GlobalBool(TanenbaumFlag.Name):
+		urls = params.TanenbaumBootnodes
 	case cfg.BootstrapNodes != nil:
 		return // already set, don't apply defaults.
 	}
@@ -1306,6 +1315,8 @@ func setDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "calaveras")
 	case ctx.GlobalBool(PolygonFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "polygon")
+	case ctx.GlobalBool(TanenbaumFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "tanenbaum")
 	}
 }
 
@@ -1492,7 +1503,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, RopstenFlag, RinkebyFlag, GoerliFlag, CalaverasFlag, PolygonFlag)
+	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, RopstenFlag, RinkebyFlag, GoerliFlag, CalaverasFlag, PolygonFlag, TanenbaumFlag)
 	CheckExclusive(ctx, LightServeFlag, SyncModeFlag, "light")
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 	if ctx.GlobalString(GCModeFlag.Name) == "archive" && ctx.GlobalUint64(TxLookupLimitFlag.Name) != 0 {
@@ -1659,6 +1670,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultPolygonGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.PolygonGenesisHash)
+	case ctx.GlobalBool(TanenbaumFlag.Name):
+		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 58
+		}
+		cfg.Genesis = core.DefaultTanenbaumGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.TanenbaumGenesisHash)
 	case ctx.GlobalBool(CalaverasFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 123 // https://gist.github.com/holiman/c5697b041b3dc18c50a5cdd382cbdd16
@@ -1857,6 +1874,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultCalaverasGenesisBlock()
 	case ctx.GlobalBool(PolygonFlag.Name):
 		genesis = core.DefaultPolygonGenesisBlock()
+	case ctx.GlobalBool(TanenbaumFlag.Name):
+		genesis = core.DefaultTanenbaumGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}

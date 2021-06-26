@@ -252,6 +252,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.CalaverasChainConfig
 	case ghash == params.PolygonGenesisHash:
 		return params.PolygonChainConfig
+	case ghash == params.TanenbaumGenesisHash:
+		return params.TanenbaumChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -417,6 +419,16 @@ func DefaultPolygonGenesisBlock() *Genesis {
 	// Full genesis: https://gist.github.com/holiman/c6ed9269dce28304ad176314caa75e97
 	return &Genesis{
 		Config:     params.PolygonChainConfig,
+		Timestamp:  0x60b3877f,
+		ExtraData:  hexutil.MustDecode("0x00"),
+		GasLimit:   0x47b760,
+		Difficulty: big.NewInt(1),
+	}
+}
+func DefaultTanenbaumGenesisBlock() *Genesis {
+	// Full genesis: https://gist.github.com/holiman/c6ed9269dce28304ad176314caa75e97
+	return &Genesis{
+		Config:     params.TanenbaumChainConfig,
 		Timestamp:  0x60b3877f,
 		ExtraData:  hexutil.MustDecode("0x00"),
 		GasLimit:   0x47b760,

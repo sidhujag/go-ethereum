@@ -140,6 +140,7 @@ var (
 		utils.GoerliFlag,
 		utils.CalaverasFlag,
 		utils.PolygonFlag,
+		utils.TanenbaumFlag,
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
 		utils.EthStatsURLFlag,
@@ -282,6 +283,9 @@ func prepare(ctx *cli.Context) {
 
 	case ctx.GlobalIsSet(utils.PolygonFlag.Name):
 		log.Info("Starting Geth on Polygon...")
+
+	case ctx.GlobalIsSet(utils.TanenbaumFlag.Name):
+		log.Info("Starting Geth on Tanenbaum testnet...")
 
 	case ctx.GlobalIsSet(utils.DeveloperFlag.Name):
 		log.Info("Starting Geth in ephemeral dev mode...")
