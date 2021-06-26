@@ -101,6 +101,7 @@ func NewEVMInterpreter(evm *EVM, cfg Config) *EVMInterpreter {
 		switch {
 		// SYSCOIN
 		case evm.chainRules.IsPolygon:
+			jt = londonInstructionSet
 		case evm.chainRules.IsLondon:
 			jt = londonInstructionSet
 		case evm.chainRules.IsBerlin:

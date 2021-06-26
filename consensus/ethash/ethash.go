@@ -59,7 +59,7 @@ var (
 
 func init() {
 	sharedConfig := Config{
-		PowMode:       ModeNEVM,
+		PowMode:       ModeNormal,
 		CachesInMem:   3,
 		DatasetsInMem: 1,
 	}
