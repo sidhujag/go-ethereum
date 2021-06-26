@@ -59,7 +59,7 @@ var (
 
 func init() {
 	sharedConfig := Config{
-		PowMode:       ModeNormal,
+		PowMode:       ModeNEVM,
 		CachesInMem:   3,
 		DatasetsInMem: 1,
 	}
@@ -407,6 +407,7 @@ const (
 	ModeTest
 	ModeFake
 	ModeFullFake
+	ModeNEVM
 )
 
 // Config are the configuration parameters of the ethash.

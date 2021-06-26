@@ -199,6 +199,10 @@ func (ethash *Ethash) VerifyUncles(chain consensus.ChainReader, block *types.Blo
 	if ethash.config.PowMode == ModeFullFake {
 		return nil
 	}
+	// SYSCOIN NEVM mode doesn't have uncles
+	if ethash.config.PowMode == ModeNEVM && len(block.Uncles()) != 0 {
+		return errTooManyUncles
+	}
 	// Verify that there are at most 2 uncles included in this block
 	if len(block.Uncles()) > maxUncles {
 		return errTooManyUncles
