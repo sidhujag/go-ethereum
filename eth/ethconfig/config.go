@@ -67,7 +67,7 @@ var Defaults = Config{
 		DatasetsOnDisk:   2,
 		DatasetsLockMmap: false,
 	},
-	NetworkId:               1,
+	NetworkId:               57, // SYSCOIN
 	TxLookupLimit:           2350000,
 	LightPeers:              100,
 	UltraLightFraction:      75,
@@ -219,6 +219,9 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		log.Warn("Ethash used in test mode")
 	case ethash.ModeShared:
 		log.Warn("Ethash used in shared mode")
+	// SYSCOIN
+	case ethash.ModeNEVM:
+		log.Warn("Ethash used in NEVM mode")
 	}
 	engine := ethash.New(ethash.Config{
 		PowMode:          config.PowMode,

@@ -68,6 +68,8 @@ func setDefaults(cfg *Config) {
 			MuirGlacierBlock:    new(big.Int),
 			BerlinBlock:         new(big.Int),
 			LondonBlock:         new(big.Int),
+			// SYSCOIN
+			PolygonBlock:        new(big.Int),
 		}
 	}
 

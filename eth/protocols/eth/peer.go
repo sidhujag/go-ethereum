@@ -106,7 +106,10 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 		term:            make(chan struct{}),
 	}
 	// Start up all the broadcasters
-	go peer.broadcastBlocks()
+	// SYSCOIN
+	if version >= ETH66A {
+		go peer.broadcastBlocks()
+	}
 	go peer.broadcastTransactions()
 	if version >= ETH65 {
 		go peer.announceTransactions()
