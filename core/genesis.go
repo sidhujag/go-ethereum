@@ -250,6 +250,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.GoerliChainConfig
 	case ghash == params.CalaverasGenesisHash:
 		return params.CalaverasChainConfig
+	case ghash == params.PolygonGenesisHash:
+		return params.PolygonChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -410,6 +412,18 @@ func DefaultCalaverasGenesisBlock() *Genesis {
 		Alloc:      decodePrealloc(calaverasAllocData),
 	}
 }
+// SYSCOIN
+func DefaultPolygonGenesisBlock() *Genesis {
+	// Full genesis: https://gist.github.com/holiman/c6ed9269dce28304ad176314caa75e97
+	return &Genesis{
+		Config:     params.PolygonChainConfig,
+		Timestamp:  0x60b3877f,
+		ExtraData:  hexutil.MustDecode("0x00"),
+		GasLimit:   0x47b760,
+		Difficulty: big.NewInt(1),
+	}
+}
+
 
 // DeveloperGenesisBlock returns the 'geth --dev' genesis block.
 func DeveloperGenesisBlock(period uint64, faucet common.Address) *Genesis {

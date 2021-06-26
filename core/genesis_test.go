@@ -189,6 +189,11 @@ func TestGenesisHashes(t *testing.T) {
 			genesis: DefaultCalaverasGenesisBlock(),
 			hash:    params.CalaverasGenesisHash,
 		},
+		// SYSCOIN
+		{
+			genesis: DefaultPolygonGenesisBlock(),
+			hash:    params.PolygonGenesisHash,
+		},
 	}
 	for i, c := range cases {
 		b := c.genesis.MustCommit(rawdb.NewMemoryDatabase())
