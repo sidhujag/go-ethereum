@@ -414,6 +414,7 @@ func DefaultCalaverasGenesisBlock() *Genesis {
 		Alloc:      decodePrealloc(calaverasAllocData),
 	}
 }
+
 // SYSCOIN
 func DefaultPolygonGenesisBlock() *Genesis {
 	// Full genesis: https://gist.github.com/holiman/c6ed9269dce28304ad176314caa75e97
@@ -435,7 +436,6 @@ func DefaultTanenbaumGenesisBlock() *Genesis {
 		Difficulty: big.NewInt(1),
 	}
 }
-
 
 // DeveloperGenesisBlock returns the 'geth --dev' genesis block.
 func DeveloperGenesisBlock(period uint64, faucet common.Address) *Genesis {

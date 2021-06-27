@@ -33,7 +33,7 @@ var (
 	GoerliGenesisHash    = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	CalaverasGenesisHash = common.HexToHash("0xeb9233d066c275efcdfed8037f4fc082770176aefdbcb7691c71da412a5670f2")
 	PolygonGenesisHash   = common.HexToHash("0x06213eb0669345b6b106bb19d9e2e198a8c06eae3a50e0f303a046ca6afd277f")
-	TanenbaumGenesisHash   = common.HexToHash("0xb2dbf8537a1f3ec00a21ded5638ced785862a424924d397ece8474611641c952")
+	TanenbaumGenesisHash = common.HexToHash("0xb2dbf8537a1f3ec00a21ded5638ced785862a424924d397ece8474611641c952")
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -421,7 +421,7 @@ type ChainConfig struct {
 	MuirGlacierBlock    *big.Int `json:"muirGlacierBlock,omitempty"`    // Eip-2384 (bomb delay) switch block (nil = no fork, 0 = already activated)
 	BerlinBlock         *big.Int `json:"berlinBlock,omitempty"`         // Berlin switch block (nil = no fork, 0 = already on berlin)
 	LondonBlock         *big.Int `json:"londonBlock,omitempty"`         // London switch block (nil = no fork, 0 = already on london)
-	PolygonBlock         *big.Int `json:"polygonBlock,omitempty"`       // Polygon switch block (nil = no fork, 0 = already on polygon)
+	PolygonBlock        *big.Int `json:"polygonBlock,omitempty"`        // Polygon switch block (nil = no fork, 0 = already on polygon)
 
 	EWASMBlock    *big.Int `json:"ewasmBlock,omitempty"`    // EWASM switch block (nil = no fork, 0 = already activated)
 	CatalystBlock *big.Int `json:"catalystBlock,omitempty"` // Catalyst switch block (nil = no fork, 0 = already on catalyst)
@@ -552,10 +552,12 @@ func (c *ChainConfig) IsCatalyst(num *big.Int) bool {
 func (c *ChainConfig) IsEWASM(num *big.Int) bool {
 	return isForked(c.EWASMBlock, num)
 }
+
 // SYSCOIN IsPolygon returns whether num is either equal to the Polygon fork block or greater.
 func (c *ChainConfig) IsPolygon(num *big.Int) bool {
 	return isForked(c.PolygonBlock, num)
 }
+
 // CheckCompatible checks whether scheduled fork transitions have been imported
 // with a mismatching chain configuration.
 func (c *ChainConfig) CheckCompatible(newcfg *ChainConfig, height uint64) *ConfigCompatError {

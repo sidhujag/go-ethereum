@@ -248,7 +248,6 @@ func (w *wizard) manageGenesis() {
 		fmt.Printf("Which block should Polygon come into effect? (default = %v)\n", w.conf.Genesis.Config.PolygonBlock)
 		w.conf.Genesis.Config.PolygonBlock = w.readDefaultBigInt(w.conf.Genesis.Config.PolygonBlock)
 
-
 		out, _ := json.MarshalIndent(w.conf.Genesis.Config, "", "  ")
 		fmt.Printf("Chain configuration updated:\n\n%s\n", out)
 
