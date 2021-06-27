@@ -70,6 +70,8 @@ var (
 	// parent block's time and difficulty. The calculation uses the Byzantium rules.
 	// Specification EIP-649: https://eips.ethereum.org/EIPS/eip-649
 	calcDifficultyByzantium = makeDifficultyCalculator(big.NewInt(3000000))
+	// SYSCOIN
+	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless in NEVM PoW.
 )
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -85,6 +87,7 @@ var (
 	errInvalidDifficulty = errors.New("non-positive difficulty")
 	errInvalidMixDigest  = errors.New("invalid mix digest")
 	errInvalidPoW        = errors.New("invalid proof-of-work")
+	errInvalidUncleHash  = errors.New("non empty uncle hash")
 )
 
 // Author implements consensus.Engine, returning the header's coinbase as the
@@ -200,8 +203,8 @@ func (ethash *Ethash) VerifyUncles(chain consensus.ChainReader, block *types.Blo
 		return nil
 	}
 	// SYSCOIN NEVM mode doesn't have uncles
-	if ethash.config.PowMode == ModeNEVM && len(block.Uncles()) != 0 {
-		return errTooManyUncles
+	if ethash.config.PowMode == ModeNEVM && len(block.Uncles()) > 0 {
+		return errors.New("uncles not allowed")
 	}
 	// Verify that there are at most 2 uncles included in this block
 	if len(block.Uncles()) > maxUncles {
@@ -275,6 +278,10 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, pa
 	}
 	if header.Time <= parent.Time {
 		return errOlderBlockTime
+	}
+	// SYSCOIN Ensure that the block doesn't contain any uncles which are meaningless in NEVM PoW
+	if ethash.config.PowMode == ModeNEVM && header.UncleHash != uncleHash {
+		return errInvalidUncleHash
 	}
 	// Verify the block's difficulty based on its timestamp and parent's difficulty
 	expected := ethash.CalcDifficulty(chain, header.Time, parent)
@@ -600,6 +607,9 @@ func (ethash *Ethash) Finalize(chain consensus.ChainHeaderReader, header *types.
 	// Accumulate any block and uncle rewards and commit the final state root
 	accumulateRewards(chain.Config(), state, header, uncles)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	if ethash.config.PowMode == ModeNEVM {
+		header.UncleHash = types.CalcUncleHash(nil)
+	}
 }
 
 // FinalizeAndAssemble implements consensus.Engine, accumulating the block and

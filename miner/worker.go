@@ -441,6 +441,10 @@ func (w *worker) mainLoop() {
 			w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
 
 		case ev := <-w.chainSideCh:
+			// SYSCOIN no uncle for NEVM type network
+			if w.chainConfig.IsPolygon(ev.Block.Header().Number) {
+				continue
+			}
 			// Short circuit for duplicate side blocks
 			if _, exist := w.localUncles[ev.Block.Hash()]; exist {
 				continue
