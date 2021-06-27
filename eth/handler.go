@@ -71,6 +71,9 @@ type txPool interface {
 	// SubscribeNewTxsEvent should return an event subscription of
 	// NewTxsEvent and send events to the given channel.
 	SubscribeNewTxsEvent(chan<- core.NewTxsEvent) event.Subscription
+
+	// SYSCOIN get chainconfig for peer interface to know if its a polygon compliant network (enforce that no blocks are outgoing)
+	GetChainConfig() *params.ChainConfig
 }
 
 // handlerConfig is the collection of initialization parameters to create a full

@@ -106,8 +106,16 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 		term:            make(chan struct{}),
 	}
 	// Start up all the broadcasters
-	// SYSCOIN
-	go peer.broadcastBlocks()
+	// SYSCOIN if not polygon network actively broadcast blocks, 
+	// otherwise just respond to blocks/headers upon request
+	if peer.txpool != nil {
+		chainConfig := peer.txpool.GetChainConfig()
+		if chainConfig == nil || chainConfig.PolygonBlock == nil {
+			go peer.broadcastBlocks()
+		}
+	} else {
+		go peer.broadcastBlocks()
+	}
 	go peer.broadcastTransactions()
 	if version >= ETH65 {
 		go peer.announceTransactions()
