@@ -425,25 +425,14 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 		// Set the gas price to the limits from the CLI and start mining
 		gasprice := utils.GlobalBig(ctx, utils.MinerGasPriceFlag.Name)
 		ethBackend.TxPool().SetGasPrice(gasprice)
-		// start mining
-		threads := ctx.GlobalInt(utils.MinerThreadsFlag.Name)
-		if err := ethBackend.StartMining(threads); err != nil {
-			utils.Fatalf("Failed to start mining: %v", err)
+		// SYSCOIN
+		if !ctx.GlobalIsSet(utils.PolygonFlag.Name) && !ctx.GlobalIsSet(utils.TanenbaumFlag.Name) {
+			// start mining
+			threads := ctx.GlobalInt(utils.MinerThreadsFlag.Name)
+			if err := ethBackend.StartMining(threads); err != nil {
+				utils.Fatalf("Failed to start mining: %v", err)
+			}
 		}
-	}
-	// SYSCOIN configure gas price used for mining polygon based network
-	if ctx.GlobalIsSet(utils.PolygonFlag.Name) || ctx.GlobalIsSet(utils.TanenbaumFlag.Name) {
-		// Mining only makes sense if a full Ethereum node is running
-		if ctx.GlobalString(utils.SyncModeFlag.Name) == "light" {
-			utils.Fatalf("Light clients cannot be configured from geth, configure from Syscoin node...")
-		}
-		ethBackend, ok := backend.(*eth.EthAPIBackend)
-		if !ok {
-			utils.Fatalf("Ethereum service not running: %v", err)
-		}
-		// Set the gas price to the limits from the CLI and start mining
-		gasprice := utils.GlobalBig(ctx, utils.MinerGasPriceFlag.Name)
-		ethBackend.TxPool().SetGasPrice(gasprice)
 	}
 }
 

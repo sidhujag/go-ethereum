@@ -284,7 +284,7 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, pa
 		if header.UncleHash != uncleHash {
 			return errInvalidUncleHash
 		}
-		if chain.HasNEVMMapping(header.Hash()) {
+		if !chain.HasNEVMMapping(header.Hash()) {
 			return errors.New("Block not found in NEVM mapping")
 		}
 	}
