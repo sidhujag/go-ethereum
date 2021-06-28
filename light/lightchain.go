@@ -459,6 +459,12 @@ func (lc *LightChain) GetHeaderByHash(hash common.Hash) *types.Header {
 	return lc.hc.GetHeaderByHash(hash)
 }
 
+// SYSCOIN HasNEVMMapping checks if a NEVM block is present in the database or not, caching
+// it if present.
+func (lc *LightChain) HasNEVMMapping(hash common.Hash) bool {
+	return lc.hc.HasNEVMMapping(hash)
+}
+
 // HasHeader checks if a block header is present in the database or not, caching
 // it if present.
 func (lc *LightChain) HasHeader(hash common.Hash, number uint64) bool {

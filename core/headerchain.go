@@ -67,7 +67,9 @@ type HeaderChain struct {
 	headerCache *lru.Cache // Cache for the most recent block headers
 	tdCache     *lru.Cache // Cache for the most recent block total difficulties
 	numberCache *lru.Cache // Cache for the most recent block numbers
-
+	// SYSCOIN
+	NEVMCache     *lru.Cache // Cache for NEVM blocks existing
+	SYSCache      *lru.Cache // Cache for SYS mapping to NEVM block hash
 	procInterrupt func() bool
 
 	rand   *mrand.Rand
@@ -80,6 +82,9 @@ func NewHeaderChain(chainDb ethdb.Database, config *params.ChainConfig, engine c
 	headerCache, _ := lru.New(headerCacheLimit)
 	tdCache, _ := lru.New(tdCacheLimit)
 	numberCache, _ := lru.New(numberCacheLimit)
+	// SYSOCIN
+	NEVMCache, _ := lru.New(headerCacheLimit)
+	SYSCache, _ := lru.New(headerCacheLimit)
 
 	// Seed a fast but crypto originating random generator
 	seed, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
@@ -88,11 +93,14 @@ func NewHeaderChain(chainDb ethdb.Database, config *params.ChainConfig, engine c
 	}
 
 	hc := &HeaderChain{
-		config:        config,
-		chainDb:       chainDb,
-		headerCache:   headerCache,
-		tdCache:       tdCache,
-		numberCache:   numberCache,
+		config:      config,
+		chainDb:     chainDb,
+		headerCache: headerCache,
+		tdCache:     tdCache,
+		numberCache: numberCache,
+		// SYSCOIN
+		NEVMCache:     NEVMCache,
+		SYSCache:      SYSCache,
 		procInterrupt: procInterrupt,
 		rand:          mrand.New(mrand.NewSource(seed.Int64())),
 		engine:        engine,
@@ -508,6 +516,35 @@ func (hc *HeaderChain) GetHeaderByHash(hash common.Hash) *types.Header {
 	return hc.GetHeader(hash, *number)
 }
 
+func (hc *HeaderChain) ReadSYSMapping(sysBlockhash string) common.Hash {
+	// Short circuit if the header's already in the cache, retrieve otherwise
+	if nevmBlockhash, ok := hc.SYSCache.Get(sysBlockhash); ok {
+		return nevmBlockhash.(common.Hash)
+	}
+	nevmBlockhash := rawdb.ReadSYSMapping(hc.chainDb, sysBlockhash)
+	if nevmBlockhash == (common.Hash{}) {
+		return common.Hash{}
+	}
+	// Cache the found header for next time and return
+	hc.SYSCache.Add(sysBlockhash, nevmBlockhash)
+	return nevmBlockhash
+}
+
+func (hc *HeaderChain) HasNEVMMapping(hash common.Hash) bool {
+	if hc.NEVMCache.Contains(hash) {
+		return true
+	}
+	hasMapping := rawdb.HasNEVMMapping(hc.chainDb, hash)
+	if hasMapping {
+		hc.NEVMCache.Add(hash, []byte{0})
+	}
+	return hasMapping
+}
+
+func (hc *HeaderChain) HasSYSMapping(hash string) bool {
+	return rawdb.HasSYSMapping(hc.chainDb, hash)
+}
+
 // HasHeader checks if a block header is present in the database or not.
 // In theory, if header is present in the database, all relative components
 // like td and hash->number should be present too.
@@ -637,6 +674,9 @@ func (hc *HeaderChain) SetHead(head uint64, updateFn UpdateHeadBlocksCallback, d
 	hc.headerCache.Purge()
 	hc.tdCache.Purge()
 	hc.numberCache.Purge()
+	// SYSCOIN
+	hc.NEVMCache.Purge()
+	hc.SYSCache.Purge()
 }
 
 // SetGenesis sets a new genesis block header for the chain

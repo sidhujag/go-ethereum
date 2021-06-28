@@ -1427,7 +1427,7 @@ func (bc *BlockChain) writeKnownBlock(block *types.Block) error {
 
 	current := bc.CurrentBlock()
 	if block.ParentHash() != current.Hash() {
-		if err := bc.reorg(current, block); err != nil {
+		if err := bc.Reorg(current, block); err != nil {
 			return err
 		}
 	}
@@ -1551,7 +1551,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	if reorg {
 		// Reorganise the chain if the parent is not the head block
 		if block.ParentHash() != currentBlock.Hash() {
-			if err := bc.reorg(currentBlock, block); err != nil {
+			if err := bc.Reorg(currentBlock, block); err != nil {
 				return NonStatTy, err
 			}
 		}
@@ -2086,7 +2086,8 @@ func (bc *BlockChain) insertSideChain(block *types.Block, it *insertIterator) (i
 // reorg takes two blocks, an old chain and a new chain and will reconstruct the
 // blocks and inserts them to be part of the new canonical chain and accumulates
 // potential missing transactions and post an event about them.
-func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
+// SYSCOIN
+func (bc *BlockChain) Reorg(oldBlock, newBlock *types.Block) error {
 	var (
 		newChain    types.Blocks
 		oldChain    types.Blocks
@@ -2424,6 +2425,38 @@ func (bc *BlockChain) GetHeader(hash common.Hash, number uint64) *types.Header {
 // found.
 func (bc *BlockChain) GetHeaderByHash(hash common.Hash) *types.Header {
 	return bc.hc.GetHeaderByHash(hash)
+}
+
+func (bc *BlockChain) GetSYSMapping(sysBlockhash string) common.Hash {
+	return bc.hc.ReadSYSMapping(sysBlockhash)
+}
+
+// HasNEVMMapping checks if a NEVM block is present in the database or not, caching
+// it if present.
+func (bc *BlockChain) HasNEVMMapping(hash common.Hash) bool {
+	return bc.hc.HasNEVMMapping(hash)
+}
+
+// HasNEVMMapping checks if a NEVM block is present in the database or not, caching
+// it if present.
+func (bc *BlockChain) HasSYSMapping(hash string) bool {
+	return bc.hc.HasSYSMapping(hash)
+}
+
+func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+	batch := bc.db.NewBatch()
+	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
+	if err := batch.Write(); err != nil {
+		log.Crit("Failed to delete NEVM mappings", "err", err)
+	}
+}
+
+func (bc *BlockChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+	batch := bc.db.NewBatch()
+	rawdb.WriteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
+	if err := batch.Write(); err != nil {
+		log.Crit("Failed to write NEVM mappings", "err", err)
+	}
 }
 
 // HasHeader checks if a block header is present in the database or not, caching

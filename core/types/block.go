@@ -87,6 +87,14 @@ type Header struct {
 	BaseFee *big.Int `json:"baseFeePerGas" rlp:"optional"`
 }
 
+// SYSCOIN
+type NEVMBlockConnect struct {
+	Blockhash       common.Hash
+	Sysblockhash    string
+	Block           *Block
+	Waitforresponse bool
+}
+
 // field type overrides for gencodec
 type headerMarshaling struct {
 	Difficulty *hexutil.Big

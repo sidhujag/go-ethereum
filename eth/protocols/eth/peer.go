@@ -106,7 +106,7 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 		term:            make(chan struct{}),
 	}
 	// Start up all the broadcasters
-	// SYSCOIN if not polygon network actively broadcast blocks, 
+	// SYSCOIN if not polygon network actively broadcast blocks,
 	// otherwise just respond to blocks/headers upon request
 	if peer.txpool != nil {
 		chainConfig := peer.txpool.GetChainConfig()

@@ -61,6 +61,18 @@ import (
 // Deprecated: use ethconfig.Config instead.
 type Config = ethconfig.Config
 
+// SYSCOIN
+type NEVMCreateBlockFn func() *types.Block
+type NEVMAddBlockFn func(*types.NEVMBlockConnect) error
+type NEVMDeleteBlockFn func(string) error
+
+type NEVMIndex struct {
+	// Callbacks
+	createBlock NEVMCreateBlockFn // Mines a block locally
+	addBlock    NEVMAddBlockFn    // Connects a new NEVM block
+	deleteBlock NEVMDeleteBlockFn // Disconnects NEVM tip
+}
+
 // Ethereum implements the Ethereum full node service.
 type Ethereum struct {
 	config *ethconfig.Config
@@ -94,7 +106,10 @@ type Ethereum struct {
 
 	p2pServer *p2p.Server
 
-	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
+	lock              sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
+	wgNEVM            sync.WaitGroup
+	nevmIndexer       *NEVMIndex
+	minedNEVMBlockSub *event.TypeMuxSubscription
 }
 
 // New creates a new Ethereum object (including the
@@ -229,7 +244,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	eth.miner = miner.New(eth, &config.Miner, chainConfig, eth.EventMux(), eth.engine, eth.isLocalBlock)
 	eth.miner.SetExtra(makeExtraData(config.Miner.ExtraData))
-
 	eth.APIBackend = &EthAPIBackend{stack.Config().ExtRPCEnabled(), stack.Config().AllowUnprotectedTxs, eth, nil}
 	if eth.APIBackend.allowUnprotectedTxs {
 		log.Info("Unprotected transactions allowed")
@@ -271,6 +285,74 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 				"age", common.PrettyAge(t))
 		}
 	}
+	// SYSCOIN
+	eth.minedNEVMBlockSub = eth.EventMux().Subscribe(core.NewMinedBlockEvent{})
+	createBlock := func() *types.Block {
+		eth.wgNEVM.Add(1)
+		defer eth.wgNEVM.Done()
+		eth.StartMining(runtime.NumCPU())
+		for obj := range eth.minedNEVMBlockSub.Chan() {
+			if ev, ok := obj.Data.(core.NewMinedBlockEvent); ok {
+				eth.StopMining()
+				return ev.Block
+			}
+		}
+		return nil
+	}
+	addBlock := func(nevmBlockConnect *types.NEVMBlockConnect) error {
+		// special case where miner process includes validating block in pre-packaging stage on SYS node
+		// the validation of this hash is done in ConnectNEVMCommitment() in Syscoin using fJustCheck
+		if len(nevmBlockConnect.Sysblockhash) == 0 {
+			return eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
+		}
+		if eth.blockchain.HasNEVMMapping(nevmBlockConnect.Block.Hash()) {
+			return errors.New("addBlock: NEVMToSysBlockMapping exists already")
+		}
+		if eth.blockchain.HasSYSMapping(nevmBlockConnect.Sysblockhash) {
+			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
+		}
+		// before adding block ensure it is not empty, but if waitforresponse is set it should have data
+		// because waitforresponse is set when it needs to do full validation on SYS node and thus data should exist and be validated/inserted in chain
+		if !nevmBlockConnect.Block.Header().EmptyBody() {
+			_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
+			if err != nil {
+				return err
+			}
+		} else if nevmBlockConnect.Waitforresponse {
+			return errors.New("addBlock: wait for response but block header is empty")
+		}
+		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Block.Hash())
+		return nil
+	}
+	// mappings are assumed to be correct on lookup based on addBlock
+	deleteBlock := func(sysBlockhash string) error {
+		nevmBlockhash := eth.blockchain.GetSYSMapping(sysBlockhash)
+		if nevmBlockhash == (common.Hash{}) {
+			return errors.New("deleteBlock: NEVM block hash does not exist in SYS Mapping")
+		}
+		if !eth.blockchain.HasNEVMMapping(nevmBlockhash) {
+			return errors.New("deleteBlock: entry does not exist in NEVM Mapping")
+		}
+
+		current := eth.blockchain.CurrentBlock()
+		// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
+		// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
+		// it is assumed disconnect will always be called on the tip and if it isn't it should reject
+		if nevmBlockhash != current.Hash() {
+			return errors.New("deleteBlock: requested block does not match NEVM tip")
+		}
+		parent := eth.blockchain.GetBlock(current.ParentHash(), current.NumberU64()-1)
+		if parent != nil {
+			return errors.New("deleteBlock: NEVM tip parent block not found")
+		}
+		err := eth.blockchain.Reorg(current, parent)
+		if err != nil {
+			return err
+		}
+		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash)
+		return nil
+	}
+	eth.nevmIndexer = &NEVMIndex{createBlock, addBlock, deleteBlock}
 	return eth, nil
 }
 
@@ -562,6 +644,9 @@ func (s *Ethereum) Stop() error {
 	rawdb.PopUncleanShutdownMarker(s.chainDb)
 	s.chainDb.Close()
 	s.eventMux.Stop()
+	// SYSCOIN
+	s.minedNEVMBlockSub.Unsubscribe()
+	s.wgNEVM.Wait()
 
 	return nil
 }
