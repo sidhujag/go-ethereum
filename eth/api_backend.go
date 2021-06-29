@@ -341,3 +341,11 @@ func (b *EthAPIBackend) StateAtBlock(ctx context.Context, block *types.Block, re
 func (b *EthAPIBackend) StateAtTransaction(ctx context.Context, block *types.Block, txIndex int, reexec uint64) (core.Message, vm.BlockContext, *state.StateDB, error) {
 	return b.eth.stateAtTransaction(block, txIndex, reexec)
 }
+
+// SYSCOIN
+func (b *EthAPIBackend) InitZMQPubSub(nevmconnect, nevmdisconnect, nevmblock, nevmpub string) error {
+	if b.eth.zmqPubSub == nil {
+		return nil
+	}
+	return b.eth.zmqPubSub.Init(nevmconnect, nevmdisconnect, nevmblock, nevmpub)
+}

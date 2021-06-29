@@ -55,6 +55,8 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+	// SYSCOIN
+	"github.com/ethereum/go-ethereum/consensus/ethash"
 )
 
 // Config contains the configuration options of the ETH protocol.
@@ -62,15 +64,23 @@ import (
 type Config = ethconfig.Config
 
 // SYSCOIN
-type NEVMCreateBlockFn func() *types.Block
-type NEVMAddBlockFn func(*types.NEVMBlockConnect) error
-type NEVMDeleteBlockFn func(string) error
+type NEVMBlockConnect struct {
+	Blockhash       common.Hash
+	Sysblockhash    string
+	Block           *types.Block
+	Waitforresponse bool
+}
+
+// SYSCOIN
+type NEVMCreateBlockFn func(*Ethereum) *types.Block
+type NEVMAddBlockFn func(*NEVMBlockConnect, *Ethereum) error
+type NEVMDeleteBlockFn func(string, *Ethereum) error
 
 type NEVMIndex struct {
 	// Callbacks
-	createBlock NEVMCreateBlockFn // Mines a block locally
-	addBlock    NEVMAddBlockFn    // Connects a new NEVM block
-	deleteBlock NEVMDeleteBlockFn // Disconnects NEVM tip
+	CreateBlock NEVMCreateBlockFn // Mines a block locally
+	AddBlock    NEVMAddBlockFn    // Connects a new NEVM block
+	DeleteBlock NEVMDeleteBlockFn // Disconnects NEVM tip
 }
 
 // Ethereum implements the Ethereum full node service.
@@ -108,8 +118,12 @@ type Ethereum struct {
 
 	lock              sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 	wgNEVM            sync.WaitGroup
-	nevmIndexer       *NEVMIndex
 	minedNEVMBlockSub *event.TypeMuxSubscription
+	zmqPubSub         *ZMQPubSub
+	nevmConnectEP     string
+	nevmDisconnectEP  string
+	nevmBlockEP       string
+	nevmPubEP         string
 }
 
 // New creates a new Ethereum object (including the
@@ -287,7 +301,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	// SYSCOIN
 	eth.minedNEVMBlockSub = eth.EventMux().Subscribe(core.NewMinedBlockEvent{})
-	createBlock := func() *types.Block {
+	createBlock := func(eth *Ethereum) *types.Block {
 		eth.wgNEVM.Add(1)
 		defer eth.wgNEVM.Done()
 		eth.StartMining(runtime.NumCPU())
@@ -299,7 +313,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		}
 		return nil
 	}
-	addBlock := func(nevmBlockConnect *types.NEVMBlockConnect) error {
+	addBlock := func(nevmBlockConnect *NEVMBlockConnect, eth *Ethereum) error {
 		// special case where miner process includes validating block in pre-packaging stage on SYS node
 		// the validation of this hash is done in ConnectNEVMCommitment() in Syscoin using fJustCheck
 		if len(nevmBlockConnect.Sysblockhash) == 0 {
@@ -325,7 +339,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil
 	}
 	// mappings are assumed to be correct on lookup based on addBlock
-	deleteBlock := func(sysBlockhash string) error {
+	deleteBlock := func(sysBlockhash string, eth *Ethereum) error {
 		nevmBlockhash := eth.blockchain.GetSYSMapping(sysBlockhash)
 		if nevmBlockhash == (common.Hash{}) {
 			return errors.New("deleteBlock: NEVM block hash does not exist in SYS Mapping")
@@ -352,8 +366,10 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash)
 		return nil
 	}
-	eth.nevmIndexer = &NEVMIndex{createBlock, addBlock, deleteBlock}
-	return eth, nil
+	if ethashConfig.PowMode == ethash.ModeNEVM {
+		eth.zmqPubSub = NewZMQPubSub(eth, NEVMIndex{createBlock, addBlock, deleteBlock})
+	}
+	return eth, err
 }
 
 func makeExtraData(extra []byte) []byte {
@@ -647,6 +663,9 @@ func (s *Ethereum) Stop() error {
 	// SYSCOIN
 	s.minedNEVMBlockSub.Unsubscribe()
 	s.wgNEVM.Wait()
+	if s.zmqPubSub != nil {
+		s.zmqPubSub.Close()
+	}
 
 	return nil
 }

@@ -190,6 +190,10 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.MinerExtraDataFlag,
 			utils.MinerRecommitIntervalFlag,
 			utils.MinerNoVerfiyFlag,
+			utils.NEVMConnectFlag,
+			utils.NEVMDisconnectFlag,
+			utils.NEVMBlockFlag,
+			utils.NEVMPubFlag,
 		},
 	},
 	{
