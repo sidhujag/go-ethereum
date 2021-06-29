@@ -626,11 +626,14 @@ func (w *worker) resultLoop() {
 				}
 				logs = append(logs, receipt.Logs...)
 			}
-			// Commit block and state to database.
-			_, err := w.chain.WriteBlockWithState(block, receipts, logs, task.state, true)
-			if err != nil {
-				log.Error("Failed writing block to chain", "err", err)
-				continue
+			// SYSCOIN
+			if !w.chainConfig.IsPolygon(block.Header().Number) {
+				// Commit block and state to database.
+				_, err := w.chain.WriteBlockWithState(block, receipts, logs, task.state, true)
+				if err != nil {
+					log.Error("Failed writing block to chain", "err", err)
+					continue
+				}
 			}
 			log.Info("Successfully sealed new block", "number", block.Number(), "sealhash", sealhash, "hash", hash,
 				"elapsed", common.PrettyDuration(time.Since(task.createdAt)))
