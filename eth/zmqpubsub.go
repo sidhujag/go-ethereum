@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-zeromq/zmq4"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type ZMQPubSub struct {
@@ -135,14 +136,17 @@ func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
 				log.Error("createBlockSub: could not receive message", "err", err)
 				continue
 			}
-			log.Info("createBlockSub", "frame0", string(msg.Frames[0]), "frame1", string(msg.Frames[1]))
+			log.Info("createBlockSub", "frame0", string(msg.Frames[0]))
+			var blockRlp []byte
 			for {
 				block := zmq.nevmIndexer.CreateBlock(zmq.eth)
 				if block != nil {
+					blockRlp, _ = rlp.EncodeToBytes(block)
 					break
 				}
 			}
-			msgSend := zmq4.NewMsgFrom([]byte("nevmblock"), []byte(nil))
+			
+			msgSend := zmq4.NewMsgFrom([]byte("nevmblock"), blockRlp)
 			zmq.pub.SendMulti(msgSend)
 
 		}
