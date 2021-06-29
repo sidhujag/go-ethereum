@@ -43,25 +43,25 @@ func (zmq *ZMQPubSub) Close() {
 	zmq.createBlockSub.Close()
 }
 
-func (zmq *ZMQPubSub) Init(nevmConnectEP, nevmDisconnectEP, nevmBlockEP, nevmPubEP string) error {
+func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
 	err := zmq.pub.Listen(nevmPubEP)
 	if err != nil {
 		log.Error("could not listen on NEVM publisher point", "endpoint", nevmPubEP, "err", err)
 		return err
 	}
-	err = zmq.addBlockSub.Dial(nevmConnectEP)
+	err = zmq.addBlockSub.Dial(nevmSubEP)
 	if err != nil {
-		log.Error("could not dial NEVM connect", "endpoint", nevmConnectEP, "err", err)
+		log.Error("could not dial NEVM connect", "endpoint", nevmSubEP, "err", err)
 		return err
 	}
-	err = zmq.deleteBlockSub.Dial(nevmDisconnectEP)
+	err = zmq.deleteBlockSub.Dial(nevmSubEP)
 	if err != nil {
-		log.Error("could not dial NEVM disconnect", "endpoint", nevmDisconnectEP, "err", err)
+		log.Error("could not dial NEVM disconnect", "endpoint", nevmSubEP, "err", err)
 		return err
 	}
-	err = zmq.createBlockSub.Dial(nevmBlockEP)
+	err = zmq.createBlockSub.Dial(nevmSubEP)
 	if err != nil {
-		log.Error("could not dial NEVM block", "endpoint", nevmBlockEP, "err", err)
+		log.Error("could not dial NEVM block", "endpoint", nevmSubEP, "err", err)
 		return err
 	}
 
@@ -85,10 +85,12 @@ func (zmq *ZMQPubSub) Init(nevmConnectEP, nevmDisconnectEP, nevmBlockEP, nevmPub
 			// Read envelope
 			msg, err := zmq.addBlockSub.Recv()
 			if err != nil {
+				if err.Error() == "context canceled" {
+					return
+				}
 				log.Error("addBlockSub: could not receive message", "err", err)
 				continue
 			}
-			log.Info("[%s] %s\n", msg.Frames[0], msg.Frames[1])
 			// deserialize block connect
 			result := "connected"
 			errMsg := zmq.nevmIndexer.AddBlock(nil, zmq.eth)
@@ -96,6 +98,7 @@ func (zmq *ZMQPubSub) Init(nevmConnectEP, nevmDisconnectEP, nevmBlockEP, nevmPub
 				result = errMsg.Error()
 			}
 			msgSend := zmq4.NewMsgFrom([]byte("nevmconnect"), []byte(result))
+			log.Info("addBlockSub", "frame0", string(msg.Frames[0]), "frame1", string(msg.Frames[1]))
 			zmq.pub.SendMulti(msgSend)
 		}
 	}(zmq)
@@ -104,10 +107,12 @@ func (zmq *ZMQPubSub) Init(nevmConnectEP, nevmDisconnectEP, nevmBlockEP, nevmPub
 			// Read envelope
 			msg, err := zmq.deleteBlockSub.Recv()
 			if err != nil {
+				if err.Error() == "context canceled" {
+					return
+				}
 				log.Error("deleteBlockSub: could not receive message", "err", err)
 				continue
 			}
-			log.Info("[%s] %s\n", msg.Frames[0], msg.Frames[1])
 			// deserialize block connect
 			result := "disconnected"
 			errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
@@ -115,6 +120,7 @@ func (zmq *ZMQPubSub) Init(nevmConnectEP, nevmDisconnectEP, nevmBlockEP, nevmPub
 				result = errMsg.Error()
 			}
 			msgSend := zmq4.NewMsgFrom([]byte("nevmdisconnect"), []byte(result))
+			log.Info("deleteBlockSub", "frame0", string(msg.Frames[0]), "frame1", string(msg.Frames[1]))
 			zmq.pub.SendMulti(msgSend)
 		}
 	}(zmq)
@@ -123,10 +129,13 @@ func (zmq *ZMQPubSub) Init(nevmConnectEP, nevmDisconnectEP, nevmBlockEP, nevmPub
 			// Read envelope
 			msg, err := zmq.createBlockSub.Recv()
 			if err != nil {
+				if err.Error() == "context canceled" {
+					return
+				}
 				log.Error("createBlockSub: could not receive message", "err", err)
 				continue
 			}
-			log.Info("[%s] %s\n", msg.Frames[0], msg.Frames[1])
+			log.Info("createBlockSub", "frame0", string(msg.Frames[0]), "frame1", string(msg.Frames[1]))
 			for {
 				block := zmq.nevmIndexer.CreateBlock(zmq.eth)
 				if block != nil {

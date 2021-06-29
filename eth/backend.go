@@ -314,6 +314,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil
 	}
 	addBlock := func(nevmBlockConnect *NEVMBlockConnect, eth *Ethereum) error {
+		if nevmBlockConnect == nil {
+			return errors.New("addBlock: Empty block")
+		}
 		// special case where miner process includes validating block in pre-packaging stage on SYS node
 		// the validation of this hash is done in ConnectNEVMCommitment() in Syscoin using fJustCheck
 		if len(nevmBlockConnect.Sysblockhash) == 0 {

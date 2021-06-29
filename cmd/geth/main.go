@@ -126,9 +126,7 @@ var (
 		utils.MinerRecommitIntervalFlag,
 		utils.MinerNoVerfiyFlag,
 		// SYSCOIN
-		utils.NEVMConnectFlag,
-		utils.NEVMDisconnectFlag,
-		utils.NEVMBlockFlag,
+		utils.NEVMSubFlag,
 		utils.NEVMPubFlag,
 		utils.NATFlag,
 		utils.NoDiscoverFlag,
@@ -438,7 +436,7 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 				utils.Fatalf("Failed to start mining: %v", err)
 			}
 		} else {
-			ethBackend.InitZMQPubSub(ctx.GlobalString(utils.NEVMConnectFlag.Name), ctx.GlobalString(utils.NEVMDisconnectFlag.Name), ctx.GlobalString(utils.NEVMBlockFlag.Name), ctx.GlobalString(utils.NEVMPubFlag.Name))
+			ethBackend.InitZMQPubSub(ctx.GlobalString(utils.NEVMSubFlag.Name), ctx.GlobalString(utils.NEVMPubFlag.Name))
 		}
 	}
 }
