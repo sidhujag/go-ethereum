@@ -56,8 +56,8 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	// SYSCOIN
-	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"bytes"
+	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/syscoin/btcd/wire"
 )
 
@@ -123,8 +123,6 @@ func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
 	}
 	return buffer.Bytes(), nil
 }
-
-
 
 // SYSCOIN
 type NEVMCreateBlockFn func(*Ethereum) *types.Block

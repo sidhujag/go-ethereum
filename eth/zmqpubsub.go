@@ -161,7 +161,7 @@ func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
 				nevmBlockConnectBytes, err = NEVMBlockConnect.Serialize(block)
 				if err != nil {
 					log.Error("createBlockSub", "err", err)
-					nevmBlockConnectBytes = make([]byte, 0)		
+					nevmBlockConnectBytes = make([]byte, 0)
 				}
 				log.Info("block hash", "block", block.Hash().String())
 			}
