@@ -115,12 +115,13 @@ func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
 	NEVMBlockWire.NEVMBlockHash = block.Hash().Bytes()
 	NEVMBlockWire.TxRoot = block.Root().Bytes()
 	NEVMBlockWire.ReceiptRoot = block.ReceiptHash().Bytes()
-	bytesOut, err = NEVMBlockWire.Serialize()
+	var buffer bytes.Buffer
+	err = NEVMBlockWire.Serialize(&buffer)
 	if err != nil {
 		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
 		return nil, err
 	}
-	return bytesOut, nil
+	return buffer.Bytes(), nil
 }
 
 
