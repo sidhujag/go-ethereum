@@ -57,6 +57,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	// SYSCOIN
 	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"bytes"
+	"github.com/syscoin/btcd/wire"
 )
 
 // Config contains the configuration options of the ETH protocol.
@@ -70,6 +72,58 @@ type NEVMBlockConnect struct {
 	Block           *types.Block
 	Waitforresponse bool
 }
+
+func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
+	var NEVMBlockWire wire.NEVMBlockWire
+	r := bytes.NewReader(bytesIn)
+	err := NEVMBlockWire.Deserialize(r)
+	if err != nil {
+		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
+		return err
+	}
+	// decode the raw block inside of NEVM data
+	var block types.Block
+	rlp.DecodeBytes(NEVMBlockWire.NEVMBlockData, &block)
+	// create NEVMBlockConnect object from deserialized block and NEVM wire data
+	n.Block = &block
+	n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
+	n.Sysblockhash = NEVMBlockWire.SYSBlockHash
+	n.Waitforresponse = NEVMBlockWire.WaitForResponse
+	// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
+	// and re-send the data with waitforresponse = false on resync, thus we should ensure that they are correct before block is approved
+	txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
+	if txRootHash != block.Root() {
+		return errors.New("Transaction Root mismatch")
+	}
+	receiptRootHash := common.BytesToHash(NEVMBlockWire.ReceiptRoot)
+	if receiptRootHash != block.ReceiptHash() {
+		return errors.New("Receipt Root mismatch")
+	}
+	if n.Blockhash != block.Hash() {
+		return errors.New("Blockhash mismatch")
+	}
+	return nil
+}
+
+func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
+	var NEVMBlockWire wire.NEVMBlockWire
+	var err error
+	NEVMBlockWire.NEVMBlockData, err = rlp.EncodeToBytes(block)
+	if err != nil {
+		return nil, err
+	}
+	NEVMBlockWire.NEVMBlockHash = block.Hash().Bytes()
+	NEVMBlockWire.TxRoot = block.Root().Bytes()
+	NEVMBlockWire.ReceiptRoot = block.ReceiptHash().Bytes()
+	bytesOut, err = NEVMBlockWire.Serialize()
+	if err != nil {
+		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
+		return nil, err
+	}
+	return bytesOut, nil
+}
+
+
 
 // SYSCOIN
 type NEVMCreateBlockFn func(*Ethereum) *types.Block
