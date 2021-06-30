@@ -19,6 +19,7 @@ package eth
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-zeromq/zmq4"
 )
