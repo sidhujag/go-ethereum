@@ -92,7 +92,7 @@ func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
 	// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
 	// and re-send the data with waitforresponse = false on resync, thus we should ensure that they are correct before block is approved
 	txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
-	if txRootHash != block.Root() {
+	if txRootHash != block.TxHash() {
 		return errors.New("Transaction Root mismatch")
 	}
 	receiptRootHash := common.BytesToHash(NEVMBlockWire.ReceiptRoot)
@@ -113,7 +113,7 @@ func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
 		return nil, err
 	}
 	NEVMBlockWire.NEVMBlockHash = block.Hash().Bytes()
-	NEVMBlockWire.TxRoot = block.Root().Bytes()
+	NEVMBlockWire.TxRoot = block.TxHash().Bytes()
 	NEVMBlockWire.ReceiptRoot = block.ReceiptHash().Bytes()
 	var buffer bytes.Buffer
 	err = NEVMBlockWire.Serialize(&buffer)
