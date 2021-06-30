@@ -19,9 +19,13 @@ package eth
 
 import (
 	"context"
+	"bytes"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-zeromq/zmq4"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/syscoin/btcd/wire"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type ZMQPubSub struct {
@@ -92,9 +96,41 @@ func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
 				log.Error("addBlockSub: could not receive message", "err", err)
 				continue
 			}
+			if len(msg.Frames) < 2 {
+				log.Error("addBlockSub: Invalid number of message frames", "len", len(msg.Frames))
+				continue
+			}
+			// deserialize NEVM data from wire
+			var NEVMBlockWire wire.NEVMBlockWire
+			r := bytes.NewReader(msg.Frames[1])
+			err = NEVMBlockWire.Deserialize(r)
+			if err != nil {
+				log.Error("addBlockSub: could not deserialize message", "err", err)
+				continue
+			}
+			// decode the raw block inside of NEVM data
+			var block types.Block
+			rlp.DecodeBytes(NEVMBlockWire.NEVMBlockData, &block)
+			// create NEVMBlockConnect object from deserialized block and NEVM wire data
+			NEVMBlockConnect := &NEVMBlockConnect{Block: &block,
+				Blockhash: common.BytesToHash(NEVMBlockWire.NEVMBlockHash),
+				Sysblockhash: NEVMBlockWire.SYSBlockHash,
+				Waitforresponse: NEVMBlockWire.WaitForResponse}
+			
+			// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
+			// and re-send the data with waitforresponse = false on resync, thus we should ensure that they are correct before block is approved
+			txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
+			if txRootHash != block.Root() {
+				log.Error("addBlockSub: Transaction Root mismatch", "NEVMBlockWire.TxRoot", txRootHash.String(), "block.Root()", block.Root().String())
+				continue
+			}
+			if NEVMBlockConnect.Blockhash != block.Hash() {
+				log.Error("addBlockSub: Blockhash mismatch", "NEVMBlockConnect.Blockhash", NEVMBlockConnect.Blockhash.String(), "block.Hash()", block.Hash().String())
+				continue
+			}
 			// deserialize block connect
 			result := "connected"
-			errMsg := zmq.nevmIndexer.AddBlock(nil, zmq.eth)
+			errMsg := zmq.nevmIndexer.AddBlock(NEVMBlockConnect, zmq.eth)
 			if errMsg != nil {
 				result = errMsg.Error()
 			}
@@ -114,9 +150,13 @@ func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
 				log.Error("deleteBlockSub: could not receive message", "err", err)
 				continue
 			}
+			if len(msg.Frames) < 2 {
+				log.Error("deleteBlockSub: Invalid number of message frames", "len", len(msg.Frames))
+				continue
+			}
 			// deserialize block connect
 			result := "disconnected"
-			errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
+			errMsg := zmq.nevmIndexer.DeleteBlock(msg.Frames[1], zmq.eth)
 			if errMsg != nil {
 				result = errMsg.Error()
 			}
@@ -136,12 +176,16 @@ func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
 				log.Error("createBlockSub: could not receive message", "err", err)
 				continue
 			}
-			log.Info("createBlockSub", "frame0", string(msg.Frames[0]))
+			if len(msg.Frames) != 1 {
+				log.Error("createBlockSub: Invalid number of message frames", "len", len(msg.Frames))
+				continue
+			}
 			var blockRlp []byte
 			for {
 				block := zmq.nevmIndexer.CreateBlock(zmq.eth)
 				if block != nil {
 					blockRlp, _ = rlp.EncodeToBytes(block)
+					log.Info("block hash", "block", block.Hash().String())
 					break
 				}
 			}

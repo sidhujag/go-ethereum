@@ -516,7 +516,7 @@ func (hc *HeaderChain) GetHeaderByHash(hash common.Hash) *types.Header {
 	return hc.GetHeader(hash, *number)
 }
 
-func (hc *HeaderChain) ReadSYSMapping(sysBlockhash string) common.Hash {
+func (hc *HeaderChain) ReadSYSMapping(sysBlockhash []byte) common.Hash {
 	// Short circuit if the header's already in the cache, retrieve otherwise
 	if nevmBlockhash, ok := hc.SYSCache.Get(sysBlockhash); ok {
 		return nevmBlockhash.(common.Hash)
@@ -541,8 +541,8 @@ func (hc *HeaderChain) HasNEVMMapping(hash common.Hash) bool {
 	return hasMapping
 }
 
-func (hc *HeaderChain) HasSYSMapping(hash string) bool {
-	return rawdb.HasSYSMapping(hc.chainDb, hash)
+func (hc *HeaderChain) HasSYSMapping(sysBlockhash []byte) bool {
+	return rawdb.HasSYSMapping(hc.chainDb, sysBlockhash)
 }
 
 // HasHeader checks if a block header is present in the database or not.

@@ -66,7 +66,7 @@ type Config = ethconfig.Config
 // SYSCOIN
 type NEVMBlockConnect struct {
 	Blockhash       common.Hash
-	Sysblockhash    string
+	Sysblockhash    []byte
 	Block           *types.Block
 	Waitforresponse bool
 }
@@ -74,7 +74,7 @@ type NEVMBlockConnect struct {
 // SYSCOIN
 type NEVMCreateBlockFn func(*Ethereum) *types.Block
 type NEVMAddBlockFn func(*NEVMBlockConnect, *Ethereum) error
-type NEVMDeleteBlockFn func(string, *Ethereum) error
+type NEVMDeleteBlockFn func([]byte, *Ethereum) error
 
 type NEVMIndex struct {
 	// Callbacks
@@ -342,7 +342,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil
 	}
 	// mappings are assumed to be correct on lookup based on addBlock
-	deleteBlock := func(sysBlockhash string, eth *Ethereum) error {
+	deleteBlock := func(sysBlockhash []byte, eth *Ethereum) error {
 		nevmBlockhash := eth.blockchain.GetSYSMapping(sysBlockhash)
 		if nevmBlockhash == (common.Hash{}) {
 			return errors.New("deleteBlock: NEVM block hash does not exist in SYS Mapping")

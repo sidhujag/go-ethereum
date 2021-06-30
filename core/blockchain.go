@@ -2427,7 +2427,7 @@ func (bc *BlockChain) GetHeaderByHash(hash common.Hash) *types.Header {
 	return bc.hc.GetHeaderByHash(hash)
 }
 
-func (bc *BlockChain) GetSYSMapping(sysBlockhash string) common.Hash {
+func (bc *BlockChain) GetSYSMapping(sysBlockhash []byte) common.Hash {
 	return bc.hc.ReadSYSMapping(sysBlockhash)
 }
 
@@ -2439,11 +2439,11 @@ func (bc *BlockChain) HasNEVMMapping(hash common.Hash) bool {
 
 // HasNEVMMapping checks if a NEVM block is present in the database or not, caching
 // it if present.
-func (bc *BlockChain) HasSYSMapping(hash string) bool {
-	return bc.hc.HasSYSMapping(hash)
+func (bc *BlockChain) HasSYSMapping(sysBlockhash []byte) bool {
+	return bc.hc.HasSYSMapping(sysBlockhash)
 }
 
-func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash []byte, nevmBlockhash common.Hash) {
 	batch := bc.db.NewBatch()
 	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
 	if err := batch.Write(); err != nil {
@@ -2451,7 +2451,7 @@ func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash comm
 	}
 }
 
-func (bc *BlockChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+func (bc *BlockChain) WriteNEVMMappings(sysBlockhash []byte, nevmBlockhash common.Hash) {
 	batch := bc.db.NewBatch()
 	rawdb.WriteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
 	if err := batch.Write(); err != nil {
