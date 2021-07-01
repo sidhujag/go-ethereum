@@ -80,26 +80,28 @@ func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
 		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
 		return err
 	}
-	// decode the raw block inside of NEVM data
-	var block types.Block
-	rlp.DecodeBytes(NEVMBlockWire.NEVMBlockData, &block)
-	// create NEVMBlockConnect object from deserialized block and NEVM wire data
-	n.Block = &block
-	n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
-	n.Sysblockhash = NEVMBlockWire.SYSBlockHash
-	n.Waitforresponse = NEVMBlockWire.WaitForResponse
-	// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
-	// and re-send the data with waitforresponse = false on resync, thus we should ensure that they are correct before block is approved
-	txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
-	if txRootHash != block.TxHash() {
-		return errors.New("Transaction Root mismatch")
-	}
-	receiptRootHash := common.BytesToHash(NEVMBlockWire.ReceiptRoot)
-	if receiptRootHash != block.ReceiptHash() {
-		return errors.New("Receipt Root mismatch")
-	}
-	if n.Blockhash != block.Hash() {
-		return errors.New("Blockhash mismatch")
+	if len(NEVMBlockWire.NEVMBlockData) > 0 {
+		// decode the raw block inside of NEVM data
+		var block types.Block
+		rlp.DecodeBytes(NEVMBlockWire.NEVMBlockData, &block)
+		// create NEVMBlockConnect object from deserialized block and NEVM wire data
+		n.Block = &block
+		n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
+		n.Sysblockhash = NEVMBlockWire.SYSBlockHash
+		n.Waitforresponse = NEVMBlockWire.WaitForResponse
+		// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
+		// and re-send the data with waitforresponse = false on resync, thus we should ensure that they are correct before block is approved
+		txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
+		if txRootHash != block.TxHash() {
+			return errors.New("Transaction Root mismatch")
+		}
+		receiptRootHash := common.BytesToHash(NEVMBlockWire.ReceiptRoot)
+		if receiptRootHash != block.ReceiptHash() {
+			return errors.New("Receipt Root mismatch")
+		}
+		if n.Blockhash != block.Hash() {
+			return errors.New("Blockhash mismatch")
+		}
 	}
 	return nil
 }
