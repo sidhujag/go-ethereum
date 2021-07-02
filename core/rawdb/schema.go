@@ -239,6 +239,6 @@ func nevmToSysKey(hash common.Hash) []byte {
 }
 
 // sysToNEVMKey = sysToNEVMPrefix + syshash
-func sysToNEVMKey(hash []byte) []byte {
-	return append(sysToNEVMPrefix, hash...)
+func sysToNEVMKey(hash string) []byte {
+	return append(sysToNEVMPrefix, []byte(hash)...)
 }

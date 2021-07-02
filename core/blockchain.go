@@ -1419,15 +1419,15 @@ func (bc *BlockChain) writeBlockWithoutState(block *types.Block, td *big.Int) (e
 	return nil
 }
 
-// writeKnownBlock updates the head block flag with a known block
+// WriteKnownBlock updates the head block flag with a known block
 // and introduces chain reorg if necessary.
-func (bc *BlockChain) writeKnownBlock(block *types.Block) error {
+func (bc *BlockChain) WriteKnownBlock(block *types.Block) error {
 	bc.wg.Add(1)
 	defer bc.wg.Done()
 
 	current := bc.CurrentBlock()
 	if block.ParentHash() != current.Hash() {
-		if err := bc.Reorg(current, block); err != nil {
+		if err := bc.reorg(current, block); err != nil {
 			return err
 		}
 	}
@@ -1551,7 +1551,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	if reorg {
 		// Reorganise the chain if the parent is not the head block
 		if block.ParentHash() != currentBlock.Hash() {
-			if err := bc.Reorg(currentBlock, block); err != nil {
+			if err := bc.reorg(currentBlock, block); err != nil {
 				return NonStatTy, err
 			}
 		}
@@ -1728,7 +1728,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		// head full block(new pivot point).
 		for block != nil && err == ErrKnownBlock {
 			log.Debug("Writing previously known block", "number", block.Number(), "hash", block.Hash())
-			if err := bc.writeKnownBlock(block); err != nil {
+			if err := bc.WriteKnownBlock(block); err != nil {
 				return it.index, err
 			}
 			lastCanon = block
@@ -1816,7 +1816,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 				log.Error("Please file an issue, skip known block execution without receipt",
 					"hash", block.Hash(), "number", block.NumberU64())
 			}
-			if err := bc.writeKnownBlock(block); err != nil {
+			if err := bc.WriteKnownBlock(block); err != nil {
 				return it.index, err
 			}
 			stats.processed++
@@ -2086,8 +2086,7 @@ func (bc *BlockChain) insertSideChain(block *types.Block, it *insertIterator) (i
 // reorg takes two blocks, an old chain and a new chain and will reconstruct the
 // blocks and inserts them to be part of the new canonical chain and accumulates
 // potential missing transactions and post an event about them.
-// SYSCOIN
-func (bc *BlockChain) Reorg(oldBlock, newBlock *types.Block) error {
+func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
 	var (
 		newChain    types.Blocks
 		oldChain    types.Blocks
@@ -2144,6 +2143,7 @@ func (bc *BlockChain) Reorg(oldBlock, newBlock *types.Block) error {
 	)
 	// Reduce the longer chain to the same number as the shorter one
 	if oldBlock.NumberU64() > newBlock.NumberU64() {
+		newChain = append(newChain, newBlock)
 		// Old chain is longer, gather all transactions and logs as deleted ones
 		for ; oldBlock != nil && oldBlock.NumberU64() != newBlock.NumberU64(); oldBlock = bc.GetBlock(oldBlock.ParentHash(), oldBlock.NumberU64()-1) {
 			oldChain = append(oldChain, oldBlock)
@@ -2427,7 +2427,7 @@ func (bc *BlockChain) GetHeaderByHash(hash common.Hash) *types.Header {
 	return bc.hc.GetHeaderByHash(hash)
 }
 
-func (bc *BlockChain) GetSYSMapping(sysBlockhash []byte) common.Hash {
+func (bc *BlockChain) GetSYSMapping(sysBlockhash string) common.Hash {
 	return bc.hc.ReadSYSMapping(sysBlockhash)
 }
 
@@ -2439,19 +2439,20 @@ func (bc *BlockChain) HasNEVMMapping(hash common.Hash) bool {
 
 // HasNEVMMapping checks if a NEVM block is present in the database or not, caching
 // it if present.
-func (bc *BlockChain) HasSYSMapping(sysBlockhash []byte) bool {
+func (bc *BlockChain) HasSYSMapping(sysBlockhash string) bool {
 	return bc.hc.HasSYSMapping(sysBlockhash)
 }
 
-func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash []byte, nevmBlockhash common.Hash) {
+func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
 	batch := bc.db.NewBatch()
 	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
 	if err := batch.Write(); err != nil {
 		log.Crit("Failed to delete NEVM mappings", "err", err)
 	}
+	bc.hc.DeleteNEVMMappings(sysBlockhash, nevmBlockhash)
 }
 
-func (bc *BlockChain) WriteNEVMMappings(sysBlockhash []byte, nevmBlockhash common.Hash) {
+func (bc *BlockChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
 	batch := bc.db.NewBatch()
 	rawdb.WriteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
 	if err := batch.Write(); err != nil {

@@ -343,9 +343,9 @@ func (b *EthAPIBackend) StateAtTransaction(ctx context.Context, block *types.Blo
 }
 
 // SYSCOIN
-func (b *EthAPIBackend) InitZMQPubSub(nevmsub, nevmpub string) error {
-	if b.eth.zmqPubSub == nil {
+func (b *EthAPIBackend) InitZMQRep(nevmpub string) error {
+	if b.eth.zmqRep == nil {
 		return nil
 	}
-	return b.eth.zmqPubSub.Init(nevmsub, nevmpub)
+	return b.eth.zmqRep.Init(nevmpub)
 }

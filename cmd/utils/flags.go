@@ -486,13 +486,9 @@ var (
 		Usage: "Disable remote sealing verification",
 	}
 	// SYSCOIN
-	NEVMSubFlag = cli.StringFlag{
-		Name:  "miner.nevmsub",
-		Usage: "NEVM Subscriber ZMQ Endpoint",
-	}
 	NEVMPubFlag = cli.StringFlag{
 		Name:  "miner.nevmpub",
-		Usage: "NEVM Publisher ZMQ Endpoint",
+		Usage: "NEVM ZMQ REP Endpoint",
 	}
 	// Account settings
 	UnlockedAccountFlag = cli.StringFlag{

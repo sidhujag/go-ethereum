@@ -26,6 +26,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"encoding/hex"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -67,9 +68,8 @@ type Config = ethconfig.Config
 // SYSCOIN
 type NEVMBlockConnect struct {
 	Blockhash       common.Hash
-	Sysblockhash    []byte
+	Sysblockhash    string
 	Block           *types.Block
-	Waitforresponse bool
 }
 
 func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
@@ -80,17 +80,15 @@ func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
 		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
 		return err
 	}
+	n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
+	n.Sysblockhash = string(NEVMBlockWire.SYSBlockHash)
 	if len(NEVMBlockWire.NEVMBlockData) > 0 {
 		// decode the raw block inside of NEVM data
 		var block types.Block
 		rlp.DecodeBytes(NEVMBlockWire.NEVMBlockData, &block)
 		// create NEVMBlockConnect object from deserialized block and NEVM wire data
 		n.Block = &block
-		n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
-		n.Sysblockhash = NEVMBlockWire.SYSBlockHash
-		n.Waitforresponse = NEVMBlockWire.WaitForResponse
 		// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
-		// and re-send the data with waitforresponse = false on resync, thus we should ensure that they are correct before block is approved
 		txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
 		if txRootHash != block.TxHash() {
 			return errors.New("Transaction Root mismatch")
@@ -103,6 +101,7 @@ func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
 			return errors.New("Blockhash mismatch")
 		}
 	}
+
 	return nil
 }
 
@@ -119,7 +118,7 @@ func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
 	var buffer bytes.Buffer
 	err = NEVMBlockWire.Serialize(&buffer)
 	if err != nil {
-		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
+		log.Error("NEVMBlockConnect: could not serialize", "err", err)
 		return nil, err
 	}
 	return buffer.Bytes(), nil
@@ -128,7 +127,7 @@ func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
 // SYSCOIN
 type NEVMCreateBlockFn func(*Ethereum) *types.Block
 type NEVMAddBlockFn func(*NEVMBlockConnect, *Ethereum) error
-type NEVMDeleteBlockFn func([]byte, *Ethereum) error
+type NEVMDeleteBlockFn func(string, *Ethereum) error
 
 type NEVMIndex struct {
 	// Callbacks
@@ -173,7 +172,7 @@ type Ethereum struct {
 	lock              sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 	wgNEVM            sync.WaitGroup
 	minedNEVMBlockSub *event.TypeMuxSubscription
-	zmqPubSub         *ZMQPubSub
+	zmqRep         *ZMQRep
 	nevmConnectEP     string
 	nevmDisconnectEP  string
 	nevmBlockEP       string
@@ -368,35 +367,41 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil
 	}
 	addBlock := func(nevmBlockConnect *NEVMBlockConnect, eth *Ethereum) error {
-		if nevmBlockConnect == nil {
+		if nevmBlockConnect == nil  {
 			return errors.New("addBlock: Empty block")
 		}
 		// special case where miner process includes validating block in pre-packaging stage on SYS node
 		// the validation of this hash is done in ConnectNEVMCommitment() in Syscoin using fJustCheck
-		if len(nevmBlockConnect.Sysblockhash) == 0 {
-			return eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
+		sysBlockHash := common.BytesToHash([]byte(nevmBlockConnect.Sysblockhash))
+		if sysBlockHash == (common.Hash{}) {
+			if nevmBlockConnect.Block == nil {
+				return errors.New("addBlock: Miner validation but empty block")
+			}
+			// write mapping so verifyHeader won't complain about it
+			eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+			verifyHeaderRes := eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
+			eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+			return verifyHeaderRes
 		}
-		if eth.blockchain.HasNEVMMapping(nevmBlockConnect.Block.Hash()) {
+		if eth.blockchain.HasNEVMMapping(nevmBlockConnect.Blockhash) {
 			return errors.New("addBlock: NEVMToSysBlockMapping exists already")
 		}
 		if eth.blockchain.HasSYSMapping(nevmBlockConnect.Sysblockhash) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
-		// before adding block ensure it is not empty, but if waitforresponse is set it should have data
-		// because waitforresponse is set when it needs to do full validation on SYS node and thus data should exist and be validated/inserted in chain
-		if !nevmBlockConnect.Block.Header().EmptyBody() {
+		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
+		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+		if nevmBlockConnect.Block != nil {
 			_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
 			if err != nil {
+				eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
 				return err
 			}
-		} else if nevmBlockConnect.Waitforresponse {
-			return errors.New("addBlock: wait for response but block header is empty")
 		}
-		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Block.Hash())
 		return nil
 	}
 	// mappings are assumed to be correct on lookup based on addBlock
-	deleteBlock := func(sysBlockhash []byte, eth *Ethereum) error {
+	deleteBlock := func(sysBlockhash string, eth *Ethereum) error {
 		nevmBlockhash := eth.blockchain.GetSYSMapping(sysBlockhash)
 		if nevmBlockhash == (common.Hash{}) {
 			return errors.New("deleteBlock: NEVM block hash does not exist in SYS Mapping")
@@ -413,10 +418,10 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			return errors.New("deleteBlock: requested block does not match NEVM tip")
 		}
 		parent := eth.blockchain.GetBlock(current.ParentHash(), current.NumberU64()-1)
-		if parent != nil {
+		if parent == nil {
 			return errors.New("deleteBlock: NEVM tip parent block not found")
 		}
-		err := eth.blockchain.Reorg(current, parent)
+		err := eth.blockchain.WriteKnownBlock(parent)
 		if err != nil {
 			return err
 		}
@@ -424,7 +429,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil
 	}
 	if ethashConfig.PowMode == ethash.ModeNEVM {
-		eth.zmqPubSub = NewZMQPubSub(eth, NEVMIndex{createBlock, addBlock, deleteBlock})
+		eth.zmqRep = NewZMQRep(eth, NEVMIndex{createBlock, addBlock, deleteBlock})
 	}
 	return eth, err
 }
@@ -720,8 +725,8 @@ func (s *Ethereum) Stop() error {
 	// SYSCOIN
 	s.minedNEVMBlockSub.Unsubscribe()
 	s.wgNEVM.Wait()
-	if s.zmqPubSub != nil {
-		s.zmqPubSub.Close()
+	if s.zmqRep != nil {
+		s.zmqRep.Close()
 	}
 
 	return nil

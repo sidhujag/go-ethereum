@@ -19,170 +19,107 @@ package eth
 
 import (
 	"context"
-
+	"encoding/hex"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-zeromq/zmq4"
 )
 
-type ZMQPubSub struct {
+type ZMQRep struct {
 	eth            *Ethereum
-	pub            zmq4.Socket
-	addBlockSub    zmq4.Socket
-	deleteBlockSub zmq4.Socket
-	createBlockSub zmq4.Socket
+	rep            zmq4.Socket
 	nevmIndexer    NEVMIndex
 	inited         bool
 }
 
-func (zmq *ZMQPubSub) Close() {
+func (zmq *ZMQRep) Close() {
 	if !zmq.inited {
 		return
 	}
-	zmq.pub.Close()
-	zmq.addBlockSub.Close()
-	zmq.deleteBlockSub.Close()
-	zmq.createBlockSub.Close()
+	zmq.rep.Close()
 }
 
-func (zmq *ZMQPubSub) Init(nevmSubEP, nevmPubEP string) error {
-	err := zmq.pub.Listen(nevmPubEP)
+func (zmq *ZMQRep) Init(nevmEP string) error {
+	err := zmq.rep.Listen(nevmEP)
 	if err != nil {
-		log.Error("could not listen on NEVM publisher point", "endpoint", nevmPubEP, "err", err)
+		log.Error("could not listen on NEVM REP point", "endpoint", nevmEP, "err", err)
 		return err
 	}
-	err = zmq.addBlockSub.Dial(nevmSubEP)
-	if err != nil {
-		log.Error("could not dial NEVM connect", "endpoint", nevmSubEP, "err", err)
-		return err
-	}
-	err = zmq.deleteBlockSub.Dial(nevmSubEP)
-	if err != nil {
-		log.Error("could not dial NEVM disconnect", "endpoint", nevmSubEP, "err", err)
-		return err
-	}
-	err = zmq.createBlockSub.Dial(nevmSubEP)
-	if err != nil {
-		log.Error("could not dial NEVM block", "endpoint", nevmSubEP, "err", err)
-		return err
-	}
-
-	err = zmq.addBlockSub.SetOption(zmq4.OptionSubscribe, "nevmconnect")
-	if err != nil {
-		log.Error("could not subscribe to nevmconnect topic", "err", err)
-		return err
-	}
-	err = zmq.deleteBlockSub.SetOption(zmq4.OptionSubscribe, "nevmdisconnect")
-	if err != nil {
-		log.Error("could not subscribe to nevmdisconnect topic", "err", err)
-		return err
-	}
-	err = zmq.createBlockSub.SetOption(zmq4.OptionSubscribe, "nevmblock")
-	if err != nil {
-		log.Error("could not subscribe to nevmblock topic", "err", err)
-		return err
-	}
-	go func(zmq *ZMQPubSub) {
+	go func(zmq *ZMQRep) {
 		for {
 			// Read envelope
-			msg, err := zmq.addBlockSub.Recv()
+			msg, err := zmq.rep.Recv()
 			if err != nil {
 				if err.Error() == "context canceled" {
 					return
 				}
-				log.Error("addBlockSub: could not receive message", "err", err)
+				log.Error("ZMQ: could not receive message", "err", err)
 				continue
 			}
-			if len(msg.Frames) < 2 {
-				log.Error("addBlockSub: Invalid number of message frames", "len", len(msg.Frames))
+			if len(msg.Frames) != 2 {
+				log.Error("Invalid number of message frames", "len", len(msg.Frames))
 				continue
 			}
-			result := "connected"
-			// deserialize NEVM data from wire
-			var nevmBlockConnect NEVMBlockConnect
-			err = nevmBlockConnect.Deserialize(msg.Frames[1])
-			if err != nil {
-				log.Error("addBlockSub", "err", err)
-				result = err.Error()
-			} else {
-				err = zmq.nevmIndexer.AddBlock(&nevmBlockConnect, zmq.eth)
+			strTopic := string(msg.Frames[0]) 
+			if strTopic == "nevmcomms" {
+				if string(msg.Frames[1]) == "\x00" {
+					log.Info("ZMQ: exiting...")
+					return
+				}
+			} else if strTopic == "nevmconnect" {
+				result := "connected"
+				// deserialize NEVM data from wire
+				var nevmBlockConnect NEVMBlockConnect
+				err = nevmBlockConnect.Deserialize(msg.Frames[1])
 				if err != nil {
+					log.Error("addBlockSub", "err", err)
 					result = err.Error()
+				} else {
+					err = zmq.nevmIndexer.AddBlock(&nevmBlockConnect, zmq.eth)
+					if err != nil {
+						log.Error("addBlockSub", "err", err)
+						result = err.Error()
+					}
 				}
-			}
-			msgSend := zmq4.NewMsgFrom([]byte("nevmconnect"), []byte(result))
-			log.Info("addBlockSub", "frame0", string(msg.Frames[0]), "frame1", string(msg.Frames[1]))
-			zmq.pub.SendMulti(msgSend)
-		}
-	}(zmq)
-	go func(zmq *ZMQPubSub) {
-		for {
-			// Read envelope
-			msg, err := zmq.deleteBlockSub.Recv()
-			if err != nil {
-				if err.Error() == "context canceled" {
-					return
+				log.Info("addBlockSub", "nevmblockhash", nevmBlockConnect.Blockhash.String())
+				msgSend := zmq4.NewMsgFrom([]byte("nevmconnect"), []byte(result))
+				log.Info("addBlockSub respond")
+				zmq.rep.SendMulti(msgSend)
+			} else if strTopic == "nevmdisconnect" {
+				// deserialize block connect
+				result := "disconnected"
+				errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
+				if errMsg != nil {
+					result = errMsg.Error()
 				}
-				log.Error("deleteBlockSub: could not receive message", "err", err)
-				continue
-			}
-			if len(msg.Frames) < 2 {
-				log.Error("deleteBlockSub: Invalid number of message frames", "len", len(msg.Frames))
-				continue
-			}
-			// deserialize block connect
-			result := "disconnected"
-			errMsg := zmq.nevmIndexer.DeleteBlock(msg.Frames[1], zmq.eth)
-			if errMsg != nil {
-				result = errMsg.Error()
-			}
-			msgSend := zmq4.NewMsgFrom([]byte("nevmdisconnect"), []byte(result))
-			log.Info("deleteBlockSub", "frame0", string(msg.Frames[0]), "frame1", string(msg.Frames[1]))
-			zmq.pub.SendMulti(msgSend)
-		}
-	}(zmq)
-	go func(zmq *ZMQPubSub) {
-		for {
-			// Read envelope
-			msg, err := zmq.createBlockSub.Recv()
-			if err != nil {
-				if err.Error() == "context canceled" {
-					return
+				msgSend := zmq4.NewMsgFrom([]byte("nevmdisconnect"), []byte(result))
+				log.Info("deleteBlockSub", "frame0", string(msg.Frames[0]), "frame1", hex.EncodeToString(msg.Frames[1]), "res", result)
+				zmq.rep.SendMulti(msgSend)
+			} else if strTopic == "nevmblock" {
+				var nevmBlockConnectBytes []byte
+				block := zmq.nevmIndexer.CreateBlock(zmq.eth)
+				if block != nil {
+					var NEVMBlockConnect NEVMBlockConnect
+					nevmBlockConnectBytes, err = NEVMBlockConnect.Serialize(block)
+					if err != nil {
+						log.Error("createBlockSub", "err", err)
+						nevmBlockConnectBytes = make([]byte, 0)
+					}
+					log.Info("NEVMBlockWire.TxRoot ", "txroot", block.TxHash().String(), "len", len(block.TxHash().Bytes()))
 				}
-				log.Error("createBlockSub: could not receive message", "err", err)
-				continue
+				msgSend := zmq4.NewMsgFrom([]byte("nevmblock"), nevmBlockConnectBytes)
+				zmq.rep.SendMulti(msgSend)
 			}
-			if len(msg.Frames) != 1 {
-				log.Error("createBlockSub: Invalid number of message frames", "len", len(msg.Frames))
-				continue
-			}
-			var nevmBlockConnectBytes []byte
-			block := zmq.nevmIndexer.CreateBlock(zmq.eth)
-			if block != nil {
-				var NEVMBlockConnect NEVMBlockConnect
-				nevmBlockConnectBytes, err = NEVMBlockConnect.Serialize(block)
-				if err != nil {
-					log.Error("createBlockSub", "err", err)
-					nevmBlockConnectBytes = make([]byte, 0)
-				}
-				log.Info("block hash", "block", block.Hash().String())
-			}
-			msgSend := zmq4.NewMsgFrom([]byte("nevmblock"), nevmBlockConnectBytes)
-			zmq.pub.SendMulti(msgSend)
-
 		}
 	}(zmq)
 	zmq.inited = true
 	return nil
 }
 
-func NewZMQPubSub(ethIn *Ethereum, nevmIndexerIn NEVMIndex) *ZMQPubSub {
+func NewZMQRep(ethIn *Ethereum, nevmIndexerIn NEVMIndex) *ZMQRep {
 	ctx := context.Background()
-	zmq := &ZMQPubSub{
+	zmq := &ZMQRep{
 		eth:            ethIn,
-		pub:            zmq4.NewPub(ctx),
-		addBlockSub:    zmq4.NewSub(ctx, zmq4.WithID(zmq4.SocketIdentity("addBlockSub"))),
-		deleteBlockSub: zmq4.NewSub(ctx, zmq4.WithID(zmq4.SocketIdentity("deleteBlockSub"))),
-		createBlockSub: zmq4.NewSub(ctx, zmq4.WithID(zmq4.SocketIdentity("createBlockSub"))),
+		rep:            zmq4.NewRep(ctx),
 		nevmIndexer:    nevmIndexerIn,
 	}
 	return zmq
