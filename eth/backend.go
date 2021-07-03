@@ -26,7 +26,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"encoding/hex"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -392,10 +391,16 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
 		if nevmBlockConnect.Block != nil {
-			_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
-			if err != nil {
-				eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
-				return err
+			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
+			current := eth.blockchain.CurrentBlock()
+			if current.Hash() == nevmBlockConnect.Block.ParentHash() {
+				_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
+				if err != nil {
+					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+					return err
+				}
+			} else {
+				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Block.ParentHash().String())
 			}
 		}
 		return nil
