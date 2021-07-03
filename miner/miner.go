@@ -156,6 +156,12 @@ func (miner *Miner) Close() {
 	close(miner.exitCh)
 }
 
+// SYSCOIN
+func (miner *Miner) ChainConfig() *params.ChainConfig{
+	return miner.worker.chainConfig
+}
+
+
 func (miner *Miner) Mining() bool {
 	return miner.worker.isRunning()
 }

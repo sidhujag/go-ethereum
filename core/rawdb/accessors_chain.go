@@ -711,17 +711,21 @@ func DeleteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockh
 	if err := db.Delete(nevmToSysKey(nevmBlockhash)); err != nil {
 		log.Crit("Failed to delete NEVM to hash mapping", "err", err)
 	}
-	if err := db.Delete(sysToNEVMKey(sysBlockhash)); err != nil {
-		log.Crit("Failed to delete SYS to NEVM mapping", "err", err)
+	if len(sysBlockhash) > 0 {
+		if err := db.Delete(sysToNEVMKey(sysBlockhash)); err != nil {
+			log.Crit("Failed to delete SYS to NEVM mapping", "err", err)
+		}
 	}
 }
 
 func WriteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockhash common.Hash) {
-	key := sysToNEVMKey(sysBlockhash)
-	if err := db.Put(key, nevmBlockhash.Bytes()); err != nil {
-		log.Crit("Failed to store header", "err", err)
+	if len(sysBlockhash) > 0 {
+		key := sysToNEVMKey(sysBlockhash)
+		if err := db.Put(key, nevmBlockhash.Bytes()); err != nil {
+			log.Crit("Failed to store header", "err", err)
+		}
 	}
-	key = nevmToSysKey(nevmBlockhash)
+	key := nevmToSysKey(nevmBlockhash)
 	if err := db.Put(key, []byte{0}); err != nil {
 		log.Crit("Failed to store header", "err", err)
 	}

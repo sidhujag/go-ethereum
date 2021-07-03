@@ -19,7 +19,6 @@ package eth
 
 import (
 	"context"
-	"encoding/hex"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-zeromq/zmq4"
 )
@@ -36,6 +35,7 @@ func (zmq *ZMQRep) Close() {
 		return
 	}
 	zmq.rep.Close()
+	log.Error("ZMQ socket closed")
 }
 
 func (zmq *ZMQRep) Init(nevmEP string) error {
@@ -46,7 +46,6 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 	}
 	go func(zmq *ZMQRep) {
 		for {
-			// Read envelope
 			msg, err := zmq.rep.Recv()
 			if err != nil {
 				if err.Error() == "context canceled" {
@@ -69,30 +68,27 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmconnect" {
 				result := "connected"
-				// deserialize NEVM data from wire
 				var nevmBlockConnect NEVMBlockConnect
 				err = nevmBlockConnect.Deserialize(msg.Frames[1])
 				if err != nil {
-					log.Error("addBlockSub", "err", err)
+					log.Error("addBlockSub Deserialize", "err", err)
 					result = err.Error()
 				} else {
 					err = zmq.nevmIndexer.AddBlock(&nevmBlockConnect, zmq.eth)
 					if err != nil {
-						log.Error("addBlockSub", "err", err)
+						log.Error("addBlockSub AddBlock", "err", err)
 						result = err.Error()
 					}
 				}
 				msgSend := zmq4.NewMsgFrom([]byte("nevmconnect"), []byte(result))
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmdisconnect" {
-				// deserialize block connect
 				result := "disconnected"
 				errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
 				if errMsg != nil {
 					result = errMsg.Error()
 				}
 				msgSend := zmq4.NewMsgFrom([]byte("nevmdisconnect"), []byte(result))
-				log.Info("deleteBlockSub", "frame0", string(msg.Frames[0]), "frame1", hex.EncodeToString(msg.Frames[1]), "res", result)
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmblock" {
 				var nevmBlockConnectBytes []byte
@@ -104,7 +100,6 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 						log.Error("createBlockSub", "err", err)
 						nevmBlockConnectBytes = make([]byte, 0)
 					}
-					log.Info("NEVMBlockWire.TxRoot ", "txroot", block.TxHash().String(), "len", len(block.TxHash().Bytes()))
 				}
 				msgSend := zmq4.NewMsgFrom([]byte("nevmblock"), nevmBlockConnectBytes)
 				zmq.rep.SendMulti(msgSend)

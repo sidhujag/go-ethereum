@@ -542,7 +542,9 @@ func (hc *HeaderChain) HasNEVMMapping(hash common.Hash) bool {
 }
 func (hc *HeaderChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
 	hc.NEVMCache.Remove(nevmBlockhash)
-	hc.SYSCache.Remove(sysBlockhash)
+	if len(sysBlockhash) > 0 {
+		hc.SYSCache.Remove(sysBlockhash)
+	}
 }
 func (hc *HeaderChain) HasSYSMapping(sysBlockhash string) bool {
 	return rawdb.HasSYSMapping(hc.chainDb, sysBlockhash)

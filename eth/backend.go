@@ -378,9 +378,14 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			}
 			// write mapping so verifyHeader won't complain about it
 			eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
-			verifyHeaderRes := eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
+			err := eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
 			eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
-			return verifyHeaderRes
+			if err != nil {
+				eth.miner.Close()
+				eth.miner = miner.New(eth, &eth.config.Miner, eth.miner.ChainConfig(), eth.EventMux(), eth.engine, eth.isLocalBlock)
+				eth.miner.SetExtra(makeExtraData(eth.config.Miner.ExtraData))
+			}
+			return err
 		}
 		if eth.blockchain.HasNEVMMapping(nevmBlockConnect.Blockhash) {
 			return errors.New("addBlock: NEVMToSysBlockMapping exists already")
