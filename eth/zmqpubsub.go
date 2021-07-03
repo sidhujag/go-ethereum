@@ -65,6 +65,8 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 					log.Info("ZMQ: exiting...")
 					return
 				}
+				msgSend := zmq4.NewMsgFrom([]byte("nevmcomms"), []byte("ack"))
+				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmconnect" {
 				result := "connected"
 				// deserialize NEVM data from wire
@@ -80,9 +82,7 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 						result = err.Error()
 					}
 				}
-				log.Info("addBlockSub", "nevmblockhash", nevmBlockConnect.Blockhash.String())
 				msgSend := zmq4.NewMsgFrom([]byte("nevmconnect"), []byte(result))
-				log.Info("addBlockSub respond")
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmdisconnect" {
 				// deserialize block connect
