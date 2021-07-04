@@ -15,7 +15,7 @@
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package core implements the Ethereum consensus protocol.
-package eth
+package les
 
 import (
 	"context"
@@ -25,9 +25,9 @@ import (
 )
 
 type ZMQRep struct {
-	eth            *Ethereum
+	leth           *LightEthereum
 	rep            zmq4.Socket
-	nevmIndexer    NEVMIndex
+	nevmIndexer    LightNEVMIndex
 	inited         bool
 }
 
@@ -75,7 +75,7 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 					log.Error("addBlockSub Deserialize", "err", err)
 					result = err.Error()
 				} else {
-					err = zmq.nevmIndexer.AddBlock(&nevmBlockConnect, zmq.eth)
+					err = zmq.nevmIndexer.AddBlock(&nevmBlockConnect, zmq.leth)
 					if err != nil {
 						log.Error("addBlockSub AddBlock", "err", err)
 						result = err.Error()
@@ -85,23 +85,14 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmdisconnect" {
 				result := "disconnected"
-				errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
+				errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.leth)
 				if errMsg != nil {
 					result = errMsg.Error()
 				}
 				msgSend := zmq4.NewMsgFrom([]byte("nevmdisconnect"), []byte(result))
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmblock" {
-				var nevmBlockConnectBytes []byte
-				block := zmq.nevmIndexer.CreateBlock(zmq.eth)
-				if block != nil {
-					var NEVMBlockConnect types.NEVMBlockConnect
-					nevmBlockConnectBytes, err = NEVMBlockConnect.Serialize(block)
-					if err != nil {
-						log.Error("createBlockSub", "err", err)
-						nevmBlockConnectBytes = make([]byte, 0)
-					}
-				}
+				nevmBlockConnectBytes := make([]byte, 0)
 				msgSend := zmq4.NewMsgFrom([]byte("nevmblock"), nevmBlockConnectBytes)
 				zmq.rep.SendMulti(msgSend)
 			}
@@ -111,10 +102,10 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 	return nil
 }
 
-func NewZMQRep(ethIn *Ethereum, NEVMPubEP string, nevmIndexerIn NEVMIndex) *ZMQRep {
+func NewZMQRep(lethIn *LightEthereum, NEVMPubEP string, nevmIndexerIn LightNEVMIndex) *ZMQRep {
 	ctx := context.Background()
 	zmq := &ZMQRep{
-		eth:            ethIn,
+		leth:           lethIn,
 		rep:            zmq4.NewRep(ctx),
 		nevmIndexer:    nevmIndexerIn,
 	}

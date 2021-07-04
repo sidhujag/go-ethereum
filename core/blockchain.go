@@ -2448,21 +2448,11 @@ func (bc *BlockChain) HasSYSMapping(sysBlockhash string) bool {
 }
 
 func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash) {
-	batch := bc.db.NewBatch()
-	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash, prevNevmBlockhash)
-	if err := batch.Write(); err != nil {
-		log.Crit("Failed to delete NEVM mappings", "err", err)
-	}
-	bc.hc.DeleteNEVMMappings(sysBlockhash, nevmBlockhash)
+	bc.hc.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, prevNevmBlockhash)
 }
 
 func (bc *BlockChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
-	batch := bc.db.NewBatch()
-	rawdb.WriteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
-	if err := batch.Write(); err != nil {
-		log.Crit("Failed to write NEVM mappings", "err", err)
-	}
-	bc.hc.NEVMLatestCache = nevmBlockhash
+	bc.hc.WriteNEVMMappings(sysBlockhash, nevmBlockhash)
 }
 
 // HasHeader checks if a block header is present in the database or not, caching

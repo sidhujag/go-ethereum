@@ -18,7 +18,6 @@
 package eth
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"math/big"
@@ -57,7 +56,6 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/syscoin/btcd/wire"
 )
 
 // Config contains the configuration options of the ETH protocol.
@@ -65,73 +63,8 @@ import (
 type Config = ethconfig.Config
 
 // SYSCOIN
-type NEVMBlockConnect struct {
-	Blockhash       common.Hash
-	Parenthash      common.Hash
-	Sysblockhash    string
-	Block           *types.Block
-}
-
-func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
-	var NEVMBlockWire wire.NEVMBlockWire
-	r := bytes.NewReader(bytesIn)
-	err := NEVMBlockWire.Deserialize(r)
-	if err != nil {
-		log.Error("NEVMBlockConnect: could not deserialize", "err", err)
-		return err
-	}
-	n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
-	n.Parenthash = common.BytesToHash(NEVMBlockWire.NEVMParentBlockHash)
-	n.Sysblockhash = string(NEVMBlockWire.SYSBlockHash)
-	if len(NEVMBlockWire.NEVMBlockData) > 0 {
-		// decode the raw block inside of NEVM data
-		var block types.Block
-		rlp.DecodeBytes(NEVMBlockWire.NEVMBlockData, &block)
-		// create NEVMBlockConnect object from deserialized block and NEVM wire data
-		n.Block = &block
-		// we need to validate that tx root and receipt root is correct based on the block because SYS will store this information in its coinbase tx
-		txRootHash := common.BytesToHash(NEVMBlockWire.TxRoot)
-		if txRootHash != block.TxHash() {
-			return errors.New("Transaction Root mismatch")
-		}
-		receiptRootHash := common.BytesToHash(NEVMBlockWire.ReceiptRoot)
-		if receiptRootHash != block.ReceiptHash() {
-			return errors.New("Receipt Root mismatch")
-		}
-		if n.Blockhash != block.Hash() {
-			return errors.New("Blockhash mismatch")
-		}
-		if n.Parenthash != block.ParentHash() {
-			return errors.New("ParentBlockhash mismatch")
-		}
-	}
-
-	return nil
-}
-
-func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
-	var NEVMBlockWire wire.NEVMBlockWire
-	var err error
-	NEVMBlockWire.NEVMBlockData, err = rlp.EncodeToBytes(block)
-	if err != nil {
-		return nil, err
-	}
-	NEVMBlockWire.NEVMBlockHash = block.Hash().Bytes()
-	NEVMBlockWire.NEVMParentBlockHash = block.ParentHash().Bytes()
-	NEVMBlockWire.TxRoot = block.TxHash().Bytes()
-	NEVMBlockWire.ReceiptRoot = block.ReceiptHash().Bytes()
-	var buffer bytes.Buffer
-	err = NEVMBlockWire.Serialize(&buffer)
-	if err != nil {
-		log.Error("NEVMBlockConnect: could not serialize", "err", err)
-		return nil, err
-	}
-	return buffer.Bytes(), nil
-}
-
-// SYSCOIN
 type NEVMCreateBlockFn func(*Ethereum) *types.Block
-type NEVMAddBlockFn func(*NEVMBlockConnect, *Ethereum) error
+type NEVMAddBlockFn func(*types.NEVMBlockConnect, *Ethereum) error
 type NEVMDeleteBlockFn func(string, *Ethereum) error
 
 type NEVMIndex struct {
@@ -140,6 +73,7 @@ type NEVMIndex struct {
 	AddBlock    NEVMAddBlockFn    // Connects a new NEVM block
 	DeleteBlock NEVMDeleteBlockFn // Disconnects NEVM tip
 }
+
 
 // Ethereum implements the Ethereum full node service.
 type Ethereum struct {
@@ -175,13 +109,10 @@ type Ethereum struct {
 	p2pServer *p2p.Server
 
 	lock              sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
+	// SYSCOIN
 	wgNEVM            sync.WaitGroup
 	minedNEVMBlockSub *event.TypeMuxSubscription
-	zmqRep         *ZMQRep
-	nevmConnectEP     string
-	nevmDisconnectEP  string
-	nevmBlockEP       string
-	nevmPubEP         string
+	zmqRep            *ZMQRep
 }
 
 // New creates a new Ethereum object (including the
@@ -371,7 +302,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		}
 		return nil
 	}
-	addBlock := func(nevmBlockConnect *NEVMBlockConnect, eth *Ethereum) error {
+	addBlock := func(nevmBlockConnect *types.NEVMBlockConnect, eth *Ethereum) error {
 		if nevmBlockConnect == nil  {
 			return errors.New("addBlock: Empty block")
 		}
@@ -399,7 +330,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if eth.blockchain.HasSYSMapping(nevmBlockConnect.Sysblockhash) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
-		current := eth.blockchain.CurrentBlock()
+		current := eth.blockchain.CurrentHeader()
 		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// ensure latest NEVM mapping matches the parent of the proposed mapping
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
@@ -415,13 +346,13 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash)
 					return err
 				}
-				// start networking sync once we start inserting chain meaning we are likely finished with IBD
-				if !eth.handler.inited {
-					log.Info("Networking start...")
-					eth.handler.Start(eth.handler.maxPeers)
-				}
 			} else {
 				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Block.ParentHash().String())
+			}
+			// start networking sync once we start inserting chain meaning we are likely finished with IBD
+			if !eth.handler.inited {
+				log.Info("Networking start...")
+				eth.handler.Start(eth.handler.maxPeers)
 			}
 		}
 		return nil
@@ -436,19 +367,19 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			return errors.New("deleteBlock: entry does not exist in NEVM Mapping")
 		}
 
-		current := eth.blockchain.CurrentBlock()
-		currentParentHash := current.ParentHash()
+		current := eth.blockchain.CurrentHeader()
+		currentHash := current.Hash()
 		currentNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
 		// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
 		// it is assumed disconnect will always be called on the tip and if it isn't it should reject
-		if nevmBlockhash != current.Hash() {
+		if nevmBlockhash != currentHash {
 			return errors.New("deleteBlock: requested block does not match current tip")
 		}
-		if currentNEVMMappingHash != current.Hash() {
+		if currentNEVMMappingHash != currentHash {
 			return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
 		}
-		parent := eth.blockchain.GetBlock(currentParentHash, current.NumberU64()-1)
+		parent := eth.blockchain.GetBlock(current.ParentHash, current.Number.Uint64()-1)
 		if parent == nil {
 			return errors.New("deleteBlock: NEVM tip parent block not found")
 		}
@@ -456,11 +387,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if err != nil {
 			return err
 		}
-		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, currentParentHash)
+		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, current.ParentHash)
 		return nil
 	}
 	if ethashConfig.PowMode == ethash.ModeNEVM {
-		eth.zmqRep = NewZMQRep(eth, NEVMIndex{createBlock, addBlock, deleteBlock})
+		eth.zmqRep = NewZMQRep(eth, config.NEVMPubEP, NEVMIndex{createBlock, addBlock, deleteBlock})
 	}
 	return eth, err
 }

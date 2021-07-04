@@ -556,7 +556,13 @@ func (hc *HeaderChain) HasNEVMMapping(hash common.Hash) bool {
 	}
 	return hasMapping
 }
-func (hc *HeaderChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+func (hc *HeaderChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash) {
+	batch := hc.chainDb.NewBatch()
+	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash, prevNevmBlockhash)
+	if err := batch.Write(); err != nil {
+		log.Crit("Failed to delete NEVM mappings", "err", err)
+	}
+
 	hc.NEVMCache.Remove(nevmBlockhash)
 	if len(sysBlockhash) > 0 {
 		hc.SYSCache.Remove(sysBlockhash)
@@ -566,7 +572,14 @@ func (hc *HeaderChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash com
 func (hc *HeaderChain) HasSYSMapping(sysBlockhash string) bool {
 	return rawdb.HasSYSMapping(hc.chainDb, sysBlockhash)
 }
-
+func (hc *HeaderChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+	batch := hc.chainDb.NewBatch()
+	rawdb.WriteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
+	if err := batch.Write(); err != nil {
+		log.Crit("Failed to write NEVM mappings", "err", err)
+	}
+	hc.NEVMLatestCache = nevmBlockhash
+}
 // HasHeader checks if a block header is present in the database or not.
 // In theory, if header is present in the database, all relative components
 // like td and hash->number should be present too.

@@ -1549,6 +1549,10 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 
 	log.Debug("Sanitizing Go's GC trigger", "percent", int(gogc))
 	godebug.SetGCPercent(int(gogc))
+	// SYSCOIN
+	if ctx.GlobalIsSet(NEVMPubFlag.Name) {
+		cfg.NEVMPubEP = ctx.GlobalString(NEVMPubFlag.Name)
+	}
 
 	if ctx.GlobalIsSet(SyncModeFlag.Name) {
 		cfg.SyncMode = *GlobalTextMarshaler(ctx, SyncModeFlag.Name).(*downloader.SyncMode)
