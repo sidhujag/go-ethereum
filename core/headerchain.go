@@ -699,6 +699,7 @@ func (hc *HeaderChain) SetHead(head uint64, updateFn UpdateHeadBlocksCallback, d
 	// SYSCOIN
 	hc.NEVMCache.Purge()
 	hc.SYSCache.Purge()
+	hc.NEVMLatestCache = common.Hash{}
 }
 
 // SetGenesis sets a new genesis block header for the chain
