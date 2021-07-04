@@ -415,6 +415,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash)
 					return err
 				}
+				// start networking sync once we start inserting chain meaning we are likely finished with IBD
+				if !eth.handler.inited {
+					log.Info("Networking start...")
+					eth.handler.Start(eth.handler.maxPeers)
+				}
 			} else {
 				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Block.ParentHash().String())
 			}
@@ -725,8 +730,13 @@ func (s *Ethereum) Start() error {
 		}
 		maxPeers -= s.config.LightPeers
 	}
-	// Start the networking layer and the light server if requested
-	s.handler.Start(maxPeers)
+	// SYSCOIN Start the networking layer and the light server if requested
+	if s.miner.ChainConfig().PolygonBlock != nil {
+		log.Info("Skip networking start...")
+		s.handler.maxPeers = maxPeers
+	} else {
+		s.handler.Start(maxPeers)
+	}
 	return nil
 }
 

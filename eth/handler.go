@@ -126,6 +126,8 @@ type handler struct {
 	chainSync *chainSyncer
 	wg        sync.WaitGroup
 	peerWG    sync.WaitGroup
+	// SYSCOIN
+	inited bool
 }
 
 // newHandler returns a handler for all Ethereum chain management protocol.
@@ -233,6 +235,8 @@ func newHandler(config *handlerConfig) (*handler, error) {
 	}
 	h.txFetcher = fetcher.NewTxFetcher(h.txpool.Has, h.txpool.AddRemotes, fetchTx)
 	h.chainSync = newChainSyncer(h)
+	// SYSCOIN
+	h.inited = false
 	return h, nil
 }
 
@@ -414,9 +418,15 @@ func (h *handler) Start(maxPeers int) {
 	h.wg.Add(2)
 	go h.chainSync.loop()
 	go h.txsyncLoop64() // TODO(karalabe): Legacy initial tx echange, drop with eth/64.
+	// SYSCOIN
+	h.inited = true
 }
 
 func (h *handler) Stop() {
+	// SYSCOIN
+	if !h.inited {
+		return
+	}
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
 
