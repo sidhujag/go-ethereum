@@ -67,6 +67,7 @@ type Config = ethconfig.Config
 // SYSCOIN
 type NEVMBlockConnect struct {
 	Blockhash       common.Hash
+	Parenthash      common.Hash
 	Sysblockhash    string
 	Block           *types.Block
 }
@@ -80,6 +81,7 @@ func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
 		return err
 	}
 	n.Blockhash = common.BytesToHash(NEVMBlockWire.NEVMBlockHash)
+	n.Parenthash = common.BytesToHash(NEVMBlockWire.NEVMParentBlockHash)
 	n.Sysblockhash = string(NEVMBlockWire.SYSBlockHash)
 	if len(NEVMBlockWire.NEVMBlockData) > 0 {
 		// decode the raw block inside of NEVM data
@@ -99,6 +101,9 @@ func (n *NEVMBlockConnect) Deserialize(bytesIn []byte) error {
 		if n.Blockhash != block.Hash() {
 			return errors.New("Blockhash mismatch")
 		}
+		if n.Parenthash != block.ParentHash() {
+			return errors.New("ParentBlockhash mismatch")
+		}
 	}
 
 	return nil
@@ -112,6 +117,7 @@ func (n *NEVMBlockConnect) Serialize(block *types.Block) ([]byte, error) {
 		return nil, err
 	}
 	NEVMBlockWire.NEVMBlockHash = block.Hash().Bytes()
+	NEVMBlockWire.NEVMParentBlockHash = block.ParentHash().Bytes()
 	NEVMBlockWire.TxRoot = block.TxHash().Bytes()
 	NEVMBlockWire.ReceiptRoot = block.ReceiptHash().Bytes()
 	var buffer bytes.Buffer
@@ -379,7 +385,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			// write mapping so verifyHeader won't complain about it
 			eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
 			err := eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
-			eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+			eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash)
 			if err != nil {
 				eth.miner.Close()
 				eth.miner = miner.New(eth, &eth.config.Miner, eth.miner.ChainConfig(), eth.EventMux(), eth.engine, eth.isLocalBlock)
@@ -393,15 +399,20 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if eth.blockchain.HasSYSMapping(nevmBlockConnect.Sysblockhash) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
+		current := eth.blockchain.CurrentBlock()
+		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
+		// ensure latest NEVM mapping matches the parent of the proposed mapping
+		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
+			return errors.New("addBlock: NEVM Mapping not continuous")
+		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
-			current := eth.blockchain.CurrentBlock()
 			if current.Hash() == nevmBlockConnect.Block.ParentHash() {
 				_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
 				if err != nil {
-					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash)
 					return err
 				}
 			} else {
@@ -421,13 +432,18 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		}
 
 		current := eth.blockchain.CurrentBlock()
+		currentParentHash := current.ParentHash()
+		currentNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
 		// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
 		// it is assumed disconnect will always be called on the tip and if it isn't it should reject
 		if nevmBlockhash != current.Hash() {
-			return errors.New("deleteBlock: requested block does not match NEVM tip")
+			return errors.New("deleteBlock: requested block does not match current tip")
 		}
-		parent := eth.blockchain.GetBlock(current.ParentHash(), current.NumberU64()-1)
+		if currentNEVMMappingHash != current.Hash() {
+			return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
+		}
+		parent := eth.blockchain.GetBlock(currentParentHash, current.NumberU64()-1)
 		if parent == nil {
 			return errors.New("deleteBlock: NEVM tip parent block not found")
 		}
@@ -435,7 +451,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if err != nil {
 			return err
 		}
-		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash)
+		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, currentParentHash)
 		return nil
 	}
 	if ethashConfig.PowMode == ethash.ModeNEVM {

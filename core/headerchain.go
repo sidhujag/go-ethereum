@@ -530,6 +530,14 @@ func (hc *HeaderChain) ReadSYSMapping(sysBlockhash string) common.Hash {
 	return nevmBlockhash
 }
 
+func (hc *HeaderChain) ReadLatestNEVMMappingHash() common.Hash {
+	nevmBlockhash := rawdb.ReadLatestNEVMMappingHash(hc.chainDb)
+	if nevmBlockhash == (common.Hash{}) {
+		return common.Hash{}
+	}
+	return nevmBlockhash
+}
+
 func (hc *HeaderChain) HasNEVMMapping(hash common.Hash) bool {
 	if hc.NEVMCache.Contains(hash) {
 		return true

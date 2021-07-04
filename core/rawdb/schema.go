@@ -91,6 +91,7 @@ var (
 	CodePrefix            = []byte("c") // CodePrefix + code hash -> account code
 	nevmToSysPrefix       = []byte("x") // nevmToSysPrefix + nevm block hash -> nevmBlock
 	sysToNEVMPrefix       = []byte("y") // sysToNEVMPrefix + sys block hash -> nevm block hash
+	latestNEVMPrefix	  = []byte("latestNEVMPrefix")
 
 	preimagePrefix = []byte("secure-key-")      // preimagePrefix + hash -> preimage
 	configPrefix   = []byte("ethereum-config-") // config prefix for the db
@@ -241,4 +242,9 @@ func nevmToSysKey(hash common.Hash) []byte {
 // sysToNEVMKey = sysToNEVMPrefix + syshash
 func sysToNEVMKey(hash string) []byte {
 	return append(sysToNEVMPrefix, []byte(hash)...)
+}
+
+// sysToNEVMKey = sysToNEVMPrefix + syshash
+func nevmLatestKey() []byte {
+	return latestNEVMPrefix
 }

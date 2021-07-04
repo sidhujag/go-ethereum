@@ -2431,6 +2431,10 @@ func (bc *BlockChain) GetSYSMapping(sysBlockhash string) common.Hash {
 	return bc.hc.ReadSYSMapping(sysBlockhash)
 }
 
+func (bc *BlockChain) GetLatestNEVMMappingHash() common.Hash {
+	return bc.hc.ReadLatestNEVMMappingHash()
+}
+
 // HasNEVMMapping checks if a NEVM block is present in the database or not, caching
 // it if present.
 func (bc *BlockChain) HasNEVMMapping(hash common.Hash) bool {
@@ -2443,9 +2447,9 @@ func (bc *BlockChain) HasSYSMapping(sysBlockhash string) bool {
 	return bc.hc.HasSYSMapping(sysBlockhash)
 }
 
-func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
+func (bc *BlockChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash) {
 	batch := bc.db.NewBatch()
-	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash)
+	rawdb.DeleteNEVMMappings(batch, sysBlockhash, nevmBlockhash, prevNevmBlockhash)
 	if err := batch.Write(); err != nil {
 		log.Crit("Failed to delete NEVM mappings", "err", err)
 	}
