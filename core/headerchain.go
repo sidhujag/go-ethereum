@@ -70,6 +70,7 @@ type HeaderChain struct {
 	// SYSCOIN
 	NEVMCache     *lru.Cache // Cache for NEVM blocks existing
 	SYSCache      *lru.Cache // Cache for SYS mapping to NEVM block hash
+	NEVMLatestCache common.Hash
 	procInterrupt func() bool
 
 	rand   *mrand.Rand
@@ -118,6 +119,8 @@ func NewHeaderChain(chainDb ethdb.Database, config *params.ChainConfig, engine c
 		}
 	}
 	hc.currentHeaderHash = hc.CurrentHeader().Hash()
+	// SYSCOIN
+	hc.NEVMLatestCache = common.Hash{}
 	headHeaderGauge.Update(hc.CurrentHeader().Number.Int64())
 
 	return hc, nil
@@ -517,7 +520,7 @@ func (hc *HeaderChain) GetHeaderByHash(hash common.Hash) *types.Header {
 }
 
 func (hc *HeaderChain) ReadSYSMapping(sysBlockhash string) common.Hash {
-	// Short circuit if the header's already in the cache, retrieve otherwise
+	// Short circuit if the hash already in the cache, retrieve otherwise
 	if nevmBlockhash, ok := hc.SYSCache.Get(sysBlockhash); ok {
 		return nevmBlockhash.(common.Hash)
 	}
@@ -531,10 +534,15 @@ func (hc *HeaderChain) ReadSYSMapping(sysBlockhash string) common.Hash {
 }
 
 func (hc *HeaderChain) ReadLatestNEVMMappingHash() common.Hash {
+	// Short circuit if the hash already in the cache, retrieve otherwise
+	if hc.NEVMLatestCache != (common.Hash{}) {
+		return hc.NEVMLatestCache
+	}
 	nevmBlockhash := rawdb.ReadLatestNEVMMappingHash(hc.chainDb)
 	if nevmBlockhash == (common.Hash{}) {
 		return common.Hash{}
 	}
+	hc.NEVMLatestCache = nevmBlockhash
 	return nevmBlockhash
 }
 
@@ -553,6 +561,7 @@ func (hc *HeaderChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash com
 	if len(sysBlockhash) > 0 {
 		hc.SYSCache.Remove(sysBlockhash)
 	}
+	hc.NEVMLatestCache = common.Hash{}
 }
 func (hc *HeaderChain) HasSYSMapping(sysBlockhash string) bool {
 	return rawdb.HasSYSMapping(hc.chainDb, sysBlockhash)

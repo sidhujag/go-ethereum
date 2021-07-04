@@ -2462,6 +2462,7 @@ func (bc *BlockChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash commo
 	if err := batch.Write(); err != nil {
 		log.Crit("Failed to write NEVM mappings", "err", err)
 	}
+	bc.hc.NEVMLatestCache = nevmBlockhash
 }
 
 // HasHeader checks if a block header is present in the database or not, caching
