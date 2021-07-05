@@ -262,6 +262,10 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 		if currentNEVMMappingHash != currentHash {
 			return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
 		}
+		err := leth.blockchain.SetHead(current.Number.Uint64() - 1)
+		if err != nil {
+			return err
+		}
 		leth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, current.ParentHash)
 		return nil
 	}
