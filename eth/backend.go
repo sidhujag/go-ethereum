@@ -330,7 +330,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if eth.blockchain.HasSYSMapping(nevmBlockConnect.Sysblockhash) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
-		current := eth.blockchain.CurrentHeader()
+		current := eth.blockchain.CurrentBlock()
 		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// ensure latest NEVM mapping matches the parent of the proposed mapping
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
@@ -367,7 +367,8 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			return errors.New("deleteBlock: entry does not exist in NEVM Mapping")
 		}
 
-		current := eth.blockchain.CurrentHeader()
+		current := eth.blockchain.CurrentBlock()
+		currentParentHash := current.ParentHash()
 		currentHash := current.Hash()
 		currentNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
@@ -379,7 +380,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if currentNEVMMappingHash != currentHash {
 			return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
 		}
-		parent := eth.blockchain.GetBlock(current.ParentHash, current.Number.Uint64()-1)
+		parent := eth.blockchain.GetBlock(currentParentHash, current.NumberU64()-1)
 		if parent == nil {
 			return errors.New("deleteBlock: NEVM tip parent block not found")
 		}
@@ -387,7 +388,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if err != nil {
 			return err
 		}
-		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, current.ParentHash)
+		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, currentParentHash)
 		return nil
 	}
 	if ethashConfig.PowMode == ethash.ModeNEVM {

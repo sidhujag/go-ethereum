@@ -85,9 +85,10 @@ func (zmq *ZMQRep) Init(nevmEP string) error {
 				zmq.rep.SendMulti(msgSend)
 			} else if strTopic == "nevmdisconnect" {
 				result := "disconnected"
-				errMsg := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
-				if errMsg != nil {
-					result = errMsg.Error()
+				err := zmq.nevmIndexer.DeleteBlock(string(msg.Frames[1]), zmq.eth)
+				if err != nil {
+					log.Error("deleteBlockSub", "err", err)
+					result = err.Error()
 				}
 				msgSend := zmq4.NewMsgFrom([]byte("nevmdisconnect"), []byte(result))
 				zmq.rep.SendMulti(msgSend)
