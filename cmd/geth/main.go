@@ -427,7 +427,7 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 		// Set the gas price to the limits from the CLI and start mining
 		gasprice := utils.GlobalBig(ctx, utils.MinerGasPriceFlag.Name)
 		ethBackend.TxPool().SetGasPrice(gasprice)
-		// SYSCOIN
+		// SYSCOIN intentionally not mine since PoW comes from Syscoin Core side, sealing validated via ZMQ layer
 		if !ctx.GlobalIsSet(utils.PolygonFlag.Name) && !ctx.GlobalIsSet(utils.TanenbaumFlag.Name) {
 			// start mining
 			threads := ctx.GlobalInt(utils.MinerThreadsFlag.Name)
