@@ -487,7 +487,7 @@ var (
 	}
 	// SYSCOIN
 	NEVMPubFlag = cli.StringFlag{
-		Name:  "miner.nevmpub",
+		Name:  "nevmpub",
 		Usage: "NEVM ZMQ REP Endpoint",
 	}
 	// Account settings
