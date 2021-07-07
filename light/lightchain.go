@@ -480,6 +480,10 @@ func (lc *LightChain) GetSYSMapping(sysBlockhash string) common.Hash {
 	return lc.hc.ReadSYSMapping(sysBlockhash)
 }
 
+func (lc *LightChain) ReadSYSHash(n uint64) []byte {
+	return lc.hc.ReadSYSHash(n)
+}
+
 func (lc *LightChain) GetLatestNEVMMappingHash() common.Hash {
 	return lc.hc.ReadLatestNEVMMappingHash()
 }
@@ -490,12 +494,12 @@ func (lc *LightChain) HasSYSMapping(sysBlockhash string) bool {
 	return lc.hc.HasSYSMapping(sysBlockhash)
 }
 
-func (lc *LightChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash) {
-	lc.hc.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, prevNevmBlockhash)
+func (lc *LightChain) DeleteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash, n uint64) {
+	lc.hc.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, prevNevmBlockhash, n)
 }
 
-func (lc *LightChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash) {
-	lc.hc.WriteNEVMMappings(sysBlockhash, nevmBlockhash)
+func (lc *LightChain) WriteNEVMMappings(sysBlockhash string, nevmBlockhash common.Hash, n uint64) {
+	lc.hc.WriteNEVMMappings(sysBlockhash, nevmBlockhash, n)
 }
 
 

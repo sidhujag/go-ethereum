@@ -20,6 +20,8 @@ package rawdb
 import (
 	"bytes"
 	"encoding/binary"
+	// SYSCOIN
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/metrics"
@@ -91,6 +93,7 @@ var (
 	CodePrefix            = []byte("c") // CodePrefix + code hash -> account code
 	nevmToSysPrefix       = []byte("x") // nevmToSysPrefix + nevm block hash -> nevmBlock
 	sysToNEVMPrefix       = []byte("y") // sysToNEVMPrefix + sys block hash -> nevm block hash
+	blockNumToSysKeyPrefix= []byte("z") // blockNumToSysKeyPrefix + block number -> SYS block hash
 	latestNEVMPrefix	  = []byte("latestNEVMPrefix")
 
 	preimagePrefix = []byte("secure-key-")      // preimagePrefix + hash -> preimage
@@ -247,4 +250,8 @@ func sysToNEVMKey(hash string) []byte {
 // sysToNEVMKey = sysToNEVMPrefix + syshash
 func nevmLatestKey() []byte {
 	return latestNEVMPrefix
+}
+// blockNumToSysKey = blockNumToSysKeyPrefix + blocknumber
+func blockNumToSysKey(n uint64) []byte {
+	return append(blockNumToSysKeyPrefix, []byte(new(big.Int).SetUint64(n).String())...)
 }

@@ -714,7 +714,7 @@ func ReadLatestNEVMMappingHash(db ethdb.Reader) common.Hash {
 	return common.BytesToHash(data)
 }
 
-func DeleteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash) {
+func DeleteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockhash common.Hash, prevNevmBlockhash common.Hash, n uint64) {
 	if err := db.Delete(nevmToSysKey(nevmBlockhash)); err != nil {
 		log.Crit("Failed to delete NEVM to hash mapping", "err", err)
 	}
@@ -726,9 +726,14 @@ func DeleteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockh
 			log.Crit("Failed to delete SYS to NEVM mapping", "err", err)
 		}
 	}
+	if n > 0 {
+		if err := db.Delete(blockNumToSysKey(n)); err != nil {
+			log.Crit("Failed to delete SYS to BlockNumber mapping", "err", err)
+		}
+	}
 }
 
-func WriteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockhash common.Hash) {
+func WriteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockhash common.Hash, n uint64) {
 	if len(sysBlockhash) > 0 {
 		key := sysToNEVMKey(sysBlockhash)
 		if err := db.Put(key, nevmBlockhash.Bytes()); err != nil {
@@ -736,12 +741,25 @@ func WriteNEVMMappings(db ethdb.KeyValueWriter, sysBlockhash string, nevmBlockha
 		}
 	}
 	key := nevmToSysKey(nevmBlockhash)
-	if err := db.Put(key, []byte{0}); err != nil {
+	if err := db.Put(key, []byte{}); err != nil {
 		log.Crit("Failed to store nevmToSysKey", "err", err)
 	}
 	if err := db.Put(nevmLatestKey(), nevmBlockhash.Bytes()); err != nil {
 		log.Crit("Failed to store nevmLatestKey", "err", err)
 	}
+	if n > 0 {
+		if err := db.Put(blockNumToSysKey(n), []byte(sysBlockhash)); err != nil {
+			log.Crit("Failed to store blockNumToSysKey", "err", err)
+		}
+	}
+}
+
+func ReadSYSHash(db ethdb.Reader, n uint64) []byte {
+	data, err := db.Get(blockNumToSysKey(n))
+	if data == nil || err != nil {
+		return []byte{}
+	}
+	return data
 }
 
 // DeleteBlock removes all block data associated with a hash.

@@ -314,9 +314,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 				return errors.New("addBlock: Miner validation but empty block")
 			}
 			// write mapping so verifyHeader won't complain about it
-			eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+			eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, 0)
 			err := eth.engine.VerifyHeader(eth.blockchain, nevmBlockConnect.Block.Header(), false)
-			eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash)
+			eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash, 0)
 			if err != nil {
 				eth.miner.Close()
 				eth.miner = miner.New(eth, &eth.config.Miner, eth.miner.ChainConfig(), eth.EventMux(), eth.engine, eth.isLocalBlock)
@@ -331,19 +331,23 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
 		current := eth.blockchain.CurrentBlock()
+		nextBlockNumber := current.NumberU64()+1
 		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// ensure latest NEVM mapping matches the parent of the proposed mapping
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
 			return errors.New("addBlock: NEVM Mapping not continuous")
 		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
-		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash)
+		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
+		if string(eth.blockchain.ReadSYSHash(nextBlockNumber)) != nevmBlockConnect.Sysblockhash {
+			return errors.New("addBlock: SYS hash stored mismatch")
+		}
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
 			if current.Hash() == nevmBlockConnect.Block.ParentHash() {
 				_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
 				if err != nil {
-					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash)
+					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash, nextBlockNumber)
 					return err
 				}
 			} else {
@@ -388,7 +392,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if err != nil {
 			return err
 		}
-		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, currentParentHash)
+		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, currentParentHash, current.NumberU64())
 		return nil
 	}
 	if ethashConfig.PowMode == ethash.ModeNEVM {
