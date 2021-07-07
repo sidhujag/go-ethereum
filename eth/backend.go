@@ -335,13 +335,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
 		// ensure latest NEVM mapping matches the parent of the proposed mapping
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
+			log.Error("addBlock: NEVM Mapping not continuous", "latestNEVMMappingHash", latestNEVMMappingHash.String(), "nevmBlockConnect.Parenthash", nevmBlockConnect.Parenthash.String())
 			return errors.New("addBlock: NEVM Mapping not continuous")
 		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
-		if string(eth.blockchain.ReadSYSHash(nextBlockNumber)) != nevmBlockConnect.Sysblockhash {
-			return errors.New("addBlock: SYS hash stored mismatch")
-		}
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
 			if current.Hash() == nevmBlockConnect.Block.ParentHash() {

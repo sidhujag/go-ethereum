@@ -233,9 +233,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		leth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
-		if string(leth.blockchain.ReadSYSHash(nextBlockNumber)) != nevmBlockConnect.Sysblockhash {
-			return errors.New("addBlock: SYS hash stored mismatch")
-		}
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
 			if current.Hash() == nevmBlockConnect.Block.ParentHash() {
