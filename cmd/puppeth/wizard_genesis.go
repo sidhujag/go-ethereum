@@ -41,7 +41,7 @@ func (w *wizard) makeGenesis() {
 	genesis := &core.Genesis{
 		Timestamp:  uint64(time.Now().Unix()),
 		GasLimit:   4700000,
-		Difficulty: big.NewInt(524288),
+		Difficulty: big.NewInt(1),
 		Alloc:      make(core.GenesisAlloc),
 		Config: &params.ChainConfig{
 			HomesteadBlock:      big.NewInt(0),
@@ -52,6 +52,9 @@ func (w *wizard) makeGenesis() {
 			ConstantinopleBlock: big.NewInt(0),
 			PetersburgBlock:     big.NewInt(0),
 			IstanbulBlock:       big.NewInt(0),
+			BerlinBlock:		 big.NewInt(0),
+			LondonBlock:       	 big.NewInt(0),
+			PolygonBlock:      	 big.NewInt(0),
 		},
 	}
 	// Figure out which consensus engine to choose
