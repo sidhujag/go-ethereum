@@ -225,17 +225,21 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
 		current := leth.blockchain.CurrentHeader()
+		currentHash := current.Hash()
 		nextBlockNumber := current.Number.Uint64()+1
 		latestNEVMMappingHash := leth.blockchain.GetLatestNEVMMappingHash()
 		// ensure latest NEVM mapping matches the parent of the proposed mapping
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
 			return errors.New("addBlock: NEVM Mapping not continuous")
 		}
+		if currentHash != nevmBlockConnect.Parenthash {
+			return errors.New("addBlock: Block not continuous with NEVM parent hash")
+		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		leth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
-			if current.Hash() == nevmBlockConnect.Block.ParentHash() {
+			if currentHash == nevmBlockConnect.Block.ParentHash() {
 				_, err := leth.blockchain.InsertHeaderChain([]*types.Header{nevmBlockConnect.Block.Header()}, 0)
 				if err != nil {
 					leth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash, nextBlockNumber)

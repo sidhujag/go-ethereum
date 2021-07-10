@@ -293,10 +293,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	createBlock := func(eth *Ethereum) *types.Block {
 		eth.wgNEVM.Add(1)
 		defer eth.wgNEVM.Done()
-		eth.StartMining(runtime.NumCPU())
+		eb, _ := eth.Etherbase()
+		eth.miner.Start(eb)
 		for obj := range eth.minedNEVMBlockSub.Chan() {
 			if ev, ok := obj.Data.(core.NewMinedBlockEvent); ok {
-				eth.StopMining()
+				eth.miner.Stop()
 				return ev.Block
 			}
 		}
@@ -305,6 +306,17 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	addBlock := func(nevmBlockConnect *types.NEVMBlockConnect, eth *Ethereum) error {
 		if nevmBlockConnect == nil  {
 			return errors.New("addBlock: Empty block")
+		}
+		current := eth.blockchain.CurrentBlock()
+		currentHash := current.Hash()
+		nextBlockNumber := current.NumberU64()+1
+		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
+		// ensure latest NEVM mapping matches the parent of the proposed mapping
+		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
+			return errors.New("addBlock: NEVM Mapping not continuous with latestNEVMMappingHash")
+		}
+		if currentHash != nevmBlockConnect.Parenthash {
+			return errors.New("addBlock: Block not continuous with NEVM parent hash")
 		}
 		// special case where miner process includes validating block in pre-packaging stage on SYS node
 		// the validation of this hash is done in ConnectNEVMCommitment() in Syscoin using fJustCheck
@@ -330,19 +342,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if eth.blockchain.HasSYSMapping(nevmBlockConnect.Sysblockhash) {
 			return errors.New("addBlock: sysToNEVMBlockMapping exists already")
 		}
-		current := eth.blockchain.CurrentBlock()
-		nextBlockNumber := current.NumberU64()+1
-		latestNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
-		// ensure latest NEVM mapping matches the parent of the proposed mapping
-		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
-			log.Error("addBlock: NEVM Mapping not continuous", "latestNEVMMappingHash", latestNEVMMappingHash.String(), "nevmBlockConnect.Parenthash", nevmBlockConnect.Parenthash.String())
-			return errors.New("addBlock: NEVM Mapping not continuous")
-		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
-			if current.Hash() == nevmBlockConnect.Block.ParentHash() {
+			if currentHash == nevmBlockConnect.Block.ParentHash() {
 				_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
 				if err != nil {
 					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash, nextBlockNumber)
@@ -603,8 +607,13 @@ func (s *Ethereum) StartMining(threads int) error {
 		// If mining is started, we can disable the transaction rejection mechanism
 		// introduced to speed sync times.
 		atomic.StoreUint32(&s.handler.acceptTxs, 1)
-
-		go s.miner.Start(eb)
+		// SYSCOIN Skip miner start and disable presealing in NEVM mode, since PoW is on Syscoin
+		if s.miner.ChainConfig().PolygonBlock == nil {
+			go s.miner.Start(eb)
+		} else {
+			log.Info("Skip networking start...")
+			s.miner.DisablePreseal()
+		}
 	}
 	return nil
 }
