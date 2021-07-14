@@ -232,27 +232,26 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
 			return errors.New("addBlock: NEVM Mapping not continuous")
 		}
-		if currentHash != nevmBlockConnect.Parenthash {
-			return errors.New("addBlock: Block not continuous with NEVM parent hash")
-		}
 		// add before potentially inserting into chain (verifyHeader depends on the mapping), we will delete if anything is wrong
 		leth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
-			if currentHash == nevmBlockConnect.Block.ParentHash() {
+			if currentHash == nevmBlockConnect.Parenthash {
 				_, err := leth.blockchain.InsertHeaderChain([]*types.Header{nevmBlockConnect.Block.Header()}, 0)
 				if err != nil {
 					leth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash, nextBlockNumber)
 					return err
 				}
 			} else {
-				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Block.ParentHash().String())
+				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 			}
 			// start networking sync once we start inserting chain meaning we are likely finished with IBD
 			if !leth.handler.inited {
 				log.Info("Networking start...")
 				leth.handler.start()
 			}
+		} else {
+			log.Info("not building on tip, add to mapping...", "blockhash", nevmBlockConnect.Blockhash, "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 		}
 		return nil
 	}

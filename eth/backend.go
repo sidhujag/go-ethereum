@@ -315,15 +315,15 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		if latestNEVMMappingHash != (common.Hash{}) && latestNEVMMappingHash != nevmBlockConnect.Parenthash {
 			return errors.New("addBlock: NEVM Mapping not continuous with latestNEVMMappingHash")
 		}
-		if currentHash != nevmBlockConnect.Parenthash {
-			return errors.New("addBlock: Block not continuous with NEVM parent hash")
-		}
 		// special case where miner process includes validating block in pre-packaging stage on SYS node
 		// the validation of this hash is done in ConnectNEVMCommitment() in Syscoin using fJustCheck
 		sysBlockHash := common.BytesToHash([]byte(nevmBlockConnect.Sysblockhash))
 		if sysBlockHash == (common.Hash{}) {
 			if nevmBlockConnect.Block == nil {
 				return errors.New("addBlock: Miner validation but empty block")
+			}
+			if currentHash != nevmBlockConnect.Parenthash {
+				return errors.New("addBlock: Block not continuous with NEVM parent hash")
 			}
 			// write mapping so verifyHeader won't complain about it
 			eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, 0)
@@ -346,20 +346,22 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		eth.blockchain.WriteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nextBlockNumber)
 		if nevmBlockConnect.Block != nil {
 			// insert into chain if building on the tip, otherwise just add into mapping and fetch via normal sync via geth
-			if currentHash == nevmBlockConnect.Block.ParentHash() {
+			if currentHash == nevmBlockConnect.Parenthash  {
 				_, err := eth.blockchain.InsertChain(types.Blocks([]*types.Block{nevmBlockConnect.Block}))
 				if err != nil {
 					eth.blockchain.DeleteNEVMMappings(nevmBlockConnect.Sysblockhash, nevmBlockConnect.Blockhash, nevmBlockConnect.Parenthash, nextBlockNumber)
 					return err
 				}
 			} else {
-				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Block.ParentHash().String())
+				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 			}
 			// start networking sync once we start inserting chain meaning we are likely finished with IBD
 			if !eth.handler.inited {
 				log.Info("Networking start...")
 				eth.handler.Start(eth.handler.maxPeers)
 			}
+		} else {
+			log.Info("not building on tip, add to mapping...", "blockhash", nevmBlockConnect.Blockhash, "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 		}
 		return nil
 	}
