@@ -30,7 +30,7 @@ import (
 
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
-FROM ubuntu:bionic AS build-stage
+FROM ubuntu:focal AS build-stage
 
 ARG SYSCOIN_VERSION=4.3.99
 ARG GZ_FILE=syscoin-${SYSCOIN_VERSION}--x86_64-linux-gnu.tar.gz
@@ -43,12 +43,13 @@ RUN set -xe; \
   wget https://github.com/sidhujag/sysbin/raw/master/${GZ_FILE}; \
   mkdir -p /syscoin; tar -xzvf ${GZ_FILE} -C /syscoin --strip-components 1; rm ${GZ_FILE};
 
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 ENV PATH=${PATH}:/syscoin/bin
 
 COPY --from=build-stage /syscoin /usr/local/bin
 FROM puppeth/blockscout:latest
+
 EXPOSE 4000 8369 8545 8546 {{.EthPort}} {{.EthPort}}/udp
 RUN \
   echo $'syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir={{.Datadir} --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats=\'{{.Ethstats}}\' --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \

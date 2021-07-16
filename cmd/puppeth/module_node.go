@@ -32,7 +32,7 @@ import (
 
 // nodeDockerfile is the Dockerfile required to run an Ethereum node.
 var nodeDockerfile = `
-FROM ubuntu:bionic AS build-stage
+FROM ubuntu:focal AS build-stage
 
 ARG SYSCOIN_VERSION=4.3.99
 ARG GZ_FILE=syscoin-${SYSCOIN_VERSION}--x86_64-linux-gnu.tar.gz
@@ -46,7 +46,7 @@ RUN set -xe; \
   wget https://github.com/sidhujag/sysbin/raw/master/${GZ_FILE}; \
   mkdir -p /syscoin; tar -xzvf ${GZ_FILE} -C /syscoin --strip-components 1; rm ${GZ_FILE};
 
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 ENV PATH=${PATH}:/syscoin/bin
 
