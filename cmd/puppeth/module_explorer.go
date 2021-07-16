@@ -30,15 +30,31 @@ import (
 
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
-FROM puppeth/blockscout:latest
+FROM ubuntu:bionic AS build-stage
 
-ADD genesis.json /genesis.json
+ARG SYSCOIN_VERSION=4.3.99
+ARG GZ_FILE=syscoin-${SYSCOIN_VERSION}-x86_64-linux-gnu.tar.gz
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -xe; \
+  apt-get update; \
+  apt-get install -yq wget; \
+  wget https://github.com/syscoin/syscoin/releases/download/v${SYSCOIN_VERSION}/${GZ_FILE}; \
+  mkdir -p /syscoin; tar -xzvf ${GZ_FILE} -C /syscoin --strip-components 1; rm ${GZ_FILE};
+
+FROM ubuntu:bionic
+
+ENV PATH=${PATH}:/syscoin/bin
+
+COPY --from=build-stage /syscoin /usr/local/bin
+FROM puppeth/blockscout:latest
+EXPOSE 4000 8369 8545 8546 {{.EthPort}} {{.EthPort}}/udp
 RUN \
-  echo 'geth --cache 512 init /genesis.json' > explorer.sh && \
-  echo $'geth --networkid {{.NetworkID}} --syncmode "full" --gcmode "archive" --port {{.EthPort}} --bootnodes {{.Bootnodes}} --ethstats \'{{.Ethstats}}\' --cache=512 --http --http.api "net,web3,eth,shh,debug" --http.corsdomain "*" --http.vhosts "*" --ws --ws.origins "*" --exitwhensynced' >> explorer.sh && \
-  echo $'exec geth --networkid {{.NetworkID}} --syncmode "full" --gcmode "archive" --port {{.EthPort}} --bootnodes {{.Bootnodes}} --ethstats \'{{.Ethstats}}\' --cache=512 --http --http.api "net,web3,eth,shh,debug" --http.corsdomain "*" --http.vhosts "*" --ws --ws.origins "*" &' >> explorer.sh && \
+  echo $'syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir={{.Datadir} --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats=\'{{.Ethstats}}\' --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
+  echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir={{.Datadir}} --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats=\'{{.Ethstats}}\' --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh && \
   echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
-  echo 'sleep 5' >> explorer.sh && \
+  echo 'sleep 15' >> explorer.sh && \
   echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
   echo 'mix phx.server' >> explorer.sh
 
