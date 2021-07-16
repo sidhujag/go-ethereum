@@ -60,7 +60,7 @@ EXPOSE 8369 8545 8546 {{.Port}} {{.Port}}/udp
 RUN \
     {{if .Unlock}}
 	echo 'mkdir -p /root/.ethereum/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json /root/.ethereum/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
-	echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir=/root/.ethereum --port=8369 --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
+	echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir={{.Datadir}} --port=8369 --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -128,6 +128,7 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 		"GasLimit":  uint64(1000000 * config.gasLimit),
 		"GasPrice":  uint64(1000000000 * config.gasPrice),
 		"Unlock":    config.keyJSON != "",
+		"Datadir":    config.datadir,
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 

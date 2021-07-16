@@ -52,8 +52,8 @@ FROM puppeth/blockscout:latest
 
 EXPOSE 4000 8369 8545 8546 {{.EthPort}} {{.EthPort}}/udp
 RUN \
-  echo $'syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir=/opt/app/.ethereum --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
-  echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir=/opt/app/.ethereum --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh && \
+  echo $'syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir={{.Datadir}} --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
+  echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --datadir={{.Datadir}} --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh && \
   echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
   echo 'sleep 15' >> explorer.sh && \
   echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
@@ -106,6 +106,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"Bootnodes": strings.Join(bootnodes, ","),
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
+		"Datadir":   config.node.datadir,
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
