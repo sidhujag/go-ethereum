@@ -35,7 +35,7 @@ var nodeDockerfile = `
 FROM ubuntu:focal AS build-stage
 
 ARG SYSCOIN_VERSION=4.3.99
-ARG GZ_FILE=syscoin-${SYSCOIN_VERSION}--x86_64-linux-gnu.tar.gz
+ARG GZ_FILE=syscoin-${SYSCOIN_VERSION}-x86_64-linux-gnu.tar.gz
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -44,7 +44,7 @@ RUN set -xe; \
   apt-get install -yq wget; \
  
   wget https://github.com/sidhujag/sysbin/raw/master/${GZ_FILE}; \
-  mkdir -p /syscoin; tar -xvf ${GZ_FILE} -C /syscoin --strip-components 1; rm ${GZ_FILE};
+  mkdir -p /syscoin; tar -xvzf ${GZ_FILE} -C /syscoin; rm ${GZ_FILE};
 
 FROM ubuntu:focal
 
