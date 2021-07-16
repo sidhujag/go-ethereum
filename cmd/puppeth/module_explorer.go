@@ -41,7 +41,7 @@ RUN set -xe; \
   apt-get update; \
   apt-get install -yq wget; \
   wget https://github.com/sidhujag/sysbin/raw/master/${GZ_FILE}; \
-  mkdir -p /syscoin; tar -xzvf ${GZ_FILE} -C /syscoin --strip-components 1; rm ${GZ_FILE};
+  mkdir -p /syscoin; tar -xvf ${GZ_FILE} -C /syscoin --strip-components 1; rm ${GZ_FILE};
 
 FROM ubuntu:focal
 
