@@ -48,8 +48,6 @@ RUN set -xe; \
 
 FROM ubuntu:focal
 
-ENV PATH=${PATH}:/syscoin/bin
-
 COPY --from=build-stage /syscoin /usr/local/bin
 
 EXPOSE 8369 8545 8546 {{.Port}} {{.Port}}/udp
@@ -59,7 +57,7 @@ EXPOSE 8369 8545 8546 {{.Port}} {{.Port}}/udp
 {{end}}
 RUN \
     {{if .Unlock}}
-	echo 'mkdir -p /root/.ethereum/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json /root/.ethereum/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
+	echo 'mkdir -p ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
 	echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --zmqpubnevm="tcp://127.0.0.1:1111" --port=8369 --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]

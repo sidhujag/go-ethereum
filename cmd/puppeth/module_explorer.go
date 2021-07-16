@@ -45,8 +45,6 @@ RUN set -xe; \
 
 FROM ubuntu:focal
 
-ENV PATH=${PATH}:/syscoin/bin
-
 COPY --from=build-stage /syscoin /usr/local/bin
 FROM puppeth/blockscout:latest
 
