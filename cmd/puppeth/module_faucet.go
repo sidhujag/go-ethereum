@@ -42,11 +42,11 @@ ADD account.pass /account.pass
 EXPOSE 8080 {{.EthPort}} {{.EthPort}}/udp
 
 ENTRYPOINT [ \
-	"faucet", "--genesis", "/genesis.json", "--network", "{{.NetworkID}}", "--bootnodes", "{{.Bootnodes}}", "--ethstats", "{{.Ethstats}}", "--ethport", "{{.EthPort}}",     \
+	"faucet", {{if eq .NetworkID 58}}"--tanenbaum", {{end}}"--network", "{{.NetworkID}}", "--bootnodes", "{{.Bootnodes}}", "--ethstats", "{{.Ethstats}}", "--ethport", "{{.EthPort}}",     \
 	"--faucet.name", "{{.FaucetName}}", "--faucet.amount", "{{.FaucetAmount}}", "--faucet.minutes", "{{.FaucetMinutes}}", "--faucet.tiers", "{{.FaucetTiers}}",             \
 	"--account.json", "/account.json", "--account.pass", "/account.pass"                                                                                                    \
 	{{if .CaptchaToken}}, "--captcha.token", "{{.CaptchaToken}}", "--captcha.secret", "{{.CaptchaSecret}}"{{end}}{{if .NoAuth}}, "--noauth"{{end}}                          \
-	{{if .TwitterToken}}, "--twitter.token.v1", "{{.TwitterToken}}"{{end}}                                                                                                  \
+	{{if .TwitterToken}}, "--twitter.token.v1", "{{.TwitterToken}}"{{end}}                                                                                                \
 ]`
 
 // faucetComposefile is the docker-compose.yml file required to deploy and maintain
