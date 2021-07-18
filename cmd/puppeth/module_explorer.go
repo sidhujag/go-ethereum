@@ -30,25 +30,14 @@ import (
 
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
-FROM ubuntu:focal AS build-stage
-
-ARG SYSCOIN_VERSION=4.3.99
-ARG GZ_FILE=syscoin-${SYSCOIN_VERSION}-x86_64-linux-gnu.tar.gz
-
-ARG DEBIAN_FRONTEND=noninteractive
-
-RUN set -xe; \
-  apt-get update; \
-  apt-get install -yq wget; \
-  wget https://github.com/sidhujag/sysbin/raw/master/${GZ_FILE}; \
-  mkdir -p /syscoin; tar -xvzf ${GZ_FILE} -C /syscoin; rm ${GZ_FILE};
-
-FROM ubuntu:focal
-
-COPY --from=build-stage /syscoin /usr/local/bin
+FROM syscoin/client-go:latest as geth-alpine
+FROM syscoin/syscoin:latest as syscoin-alpine
 FROM puppeth/blockscout:latest
 
-EXPOSE 4000 8369 8545 8546 {{.EthPort}} {{.EthPort}}/udp
+RUN mkdir -p ~/.syscoin
+COPY --from=geth-alpine /usr/local/bin/geth ~/.syscoin/sysgeth
+COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin
+
 RUN \
   echo $'syscoind {{if eq .NetworkID 58}}--regtest{{end}} --zmqpubnevm="tcp://127.0.0.1:1111" --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
   echo $'exec syscoind {{if eq .NetworkID 58}}--regtest{{end}} --zmqpubnevm="tcp://127.0.0.1:1111" --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh && \
