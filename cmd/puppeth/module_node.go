@@ -32,12 +32,14 @@ import (
 
 // nodeDockerfile is the Dockerfile required to run an Ethereum node.
 var nodeDockerfile = `
-FROM syscoin/syscoin:latest as syscoin-alpine
+FROM sidhujag/syscoin-core:latest as syscoin-alpine
 
-FROM syscoin/client-go:latest
+FROM sidhujag/client-go:latest
 RUN mkdir -p ~/.syscoin
-COPY /usr/local/bin/geth ~/.syscoin/sysgeth
-COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin
+ENV SYSCOIN_VERSION=4.3.99
+ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
+RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
+COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
 
 {{if .Unlock}}
 	ADD signer.json /signer.json
