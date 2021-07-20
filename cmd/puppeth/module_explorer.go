@@ -35,6 +35,8 @@ FROM sidhujag/client-go:latest as geth-alpine
 FROM puppeth/blockscout:latest
 
 RUN mkdir -p ~/.syscoin
+RUN apk add --no-cache wget
+RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3{{end}}/gethdscriptor.json
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 COPY --from=geth-alpine /usr/local/bin/geth ~/.syscoin/sysgeth
