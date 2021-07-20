@@ -36,10 +36,10 @@ FROM puppeth/blockscout:latest
 
 RUN mkdir ~/.syscoin
 {{if eq .NetworkID 58}}
-	RUN mkdir ~/.syscoin/testnet3
+	RUN mkdir ~/.syscoin/regtest
 {{end}}
 RUN apk add --no-cache wget
-RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/{{if eq .NetworkID 58}}testnet3{{end}}/gethdescriptor.json
+RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/{{if eq .NetworkID 58}}regtest{{end}}/gethdescriptor.json
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 COPY --from=geth-alpine /usr/local/bin/geth ~/.syscoin/sysgeth
