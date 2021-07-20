@@ -44,7 +44,6 @@ ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
 RUN chmod 755 ~/.syscoin/sysgeth
 COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
-EXPOSE 8369 18369 18444 8545 8546 30303 30303/udp
 {{if .Unlock}}
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
@@ -67,13 +66,19 @@ services:
     image: {{.Network}}/{{.Type}}
     container_name: {{.Network}}_{{.Type}}_1
     ports:
-      - "{{.Port}}:{{.Port}}"
+	  - "{{.Port}}:{{.Port}}"
+	  - "{{.SysPort1}}:{{.SysPort1}}"
+	  - "{{.SysPort2}}:{{.SysPort2}}"
+	  - "{{.SysPort3}}:{{.SysPort3}}"
       - "{{.Port}}:{{.Port}}/udp"
     volumes:
       - {{.Datadir}}:/root/.ethereum{{if .Ethashdir}}
       - {{.Ethashdir}}:/root/.ethash{{end}}
     environment:
-      - PORT={{.Port}}/tcp
+	  - PORT={{.Port}}/tcp
+	  - SYSPORT1={{.SysPort1}}/tcp
+	  - SYSPORT2={{.SysPort2}}/tcp
+	  - SYSPORT3={{.SysPort3}}/tcp
       - TOTAL_PEERS={{.TotalPeers}}
       - LIGHT_PEERS={{.LightPeers}}
       - STATS_NAME={{.Ethstats}}
@@ -130,6 +135,9 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 		"Ethashdir":  config.ethashdir,
 		"Network":    network,
 		"Port":       config.port,
+		"SysPort1":       8369,
+		"SysPort2":       18369,
+		"SysPort3":       18444,
 		"TotalPeers": config.peersTotal,
 		"Light":      config.peersLight > 0,
 		"LightPeers": config.peersLight,
