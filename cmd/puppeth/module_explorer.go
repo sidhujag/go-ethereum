@@ -42,9 +42,10 @@ ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 COPY --from=geth-alpine /usr/local/bin/geth ~/.syscoin/sysgeth
 COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
+EXPOSE 8369 18369 18444 8545 8546 30303 30303/udp
 ENV LC_ALL C
 RUN \
-  echo $'syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=206.116.243.20 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
+  echo $'syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=206.116.243.20 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
   echo $'exec syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=206.116.243.20 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --port=8369 --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh && \
   echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
   echo 'sleep 15' >> explorer.sh && \

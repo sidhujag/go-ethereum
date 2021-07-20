@@ -44,7 +44,7 @@ ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
 RUN chmod 755 ~/.syscoin/sysgeth
 COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
-
+EXPOSE 8369 18369 18444 8545 8546 30303 30303/udp
 {{if .Unlock}}
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
@@ -52,7 +52,7 @@ COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/loc
 RUN \
     {{if .Unlock}}
 	echo 'mkdir -p ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
-	echo $'exec syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=206.116.243.20 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --port=8369 --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
+	echo $'exec syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=206.116.243.20 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
