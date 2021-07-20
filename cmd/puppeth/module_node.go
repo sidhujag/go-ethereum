@@ -41,6 +41,7 @@ RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkI
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
+RUN chmod 755 ~/.syscoin/sysgeth
 COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
 
 {{if .Unlock}}
