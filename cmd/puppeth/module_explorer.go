@@ -35,9 +35,6 @@ FROM sidhujag/client-go:latest as geth-alpine
 FROM puppeth/blockscout:latest
 
 RUN mkdir ~/.syscoin
-{{if eq .NetworkID 58}}
-	RUN mkdir ~/.syscoin/regtest
-{{end}}
 RUN apk add --no-cache wget
 RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/gethdescriptor.json
 

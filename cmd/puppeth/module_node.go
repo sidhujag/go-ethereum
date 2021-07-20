@@ -37,9 +37,6 @@ FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM sidhujag/client-go:latest
 RUN apk add --no-cache wget
 RUN mkdir ~/.syscoin
-{{if eq .NetworkID 58}}
-	RUN mkdir ~/.syscoin/regtest
-{{end}}
 RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/gethdescriptor.json
 
 ENV SYSCOIN_VERSION=4.3.99
