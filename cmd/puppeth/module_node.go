@@ -41,6 +41,7 @@ RUN mkdir ~/.syscoin
 	RUN mkdir ~/.syscoin/regtest
 {{end}}
 RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/{{if eq .NetworkID 58}}regtest{{end}}/gethdescriptor.json
+RUN chmod 755 ~/.syscoin/{{if eq .NetworkID 58}}regtest{{end}}/gethdescriptor.json
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
