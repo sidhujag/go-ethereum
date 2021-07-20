@@ -40,7 +40,7 @@ RUN mkdir ~/.syscoin
 {{if eq .NetworkID 58}}
 	RUN mkdir ~/.syscoin/testnet3
 {{end}}
-RUN wget -r 'https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3{{end}}/gethdescriptor.json
+RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3{{end}}/gethdescriptor.json
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
