@@ -34,13 +34,15 @@ FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM sidhujag/client-go:latest as geth-alpine
 FROM puppeth/blockscout:latest
 
-RUN mkdir -p ~/.syscoin
+RUN mkdir ~/.syscoin
+{{if eq .NetworkID 58}}
+	RUN mkdir ~/.syscoin/testnet3
+{{end}}
 RUN apk add --no-cache wget
-RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3{{end}}/gethdscriptor.json
+RUN wget -r 'https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3{{end}}/gethdescriptor.json
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 COPY --from=geth-alpine /usr/local/bin/geth ~/.syscoin/sysgeth
-RUN chmod 755 ~/.syscoin/sysgeth
 COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
 ENV LC_ALL C
 RUN \
