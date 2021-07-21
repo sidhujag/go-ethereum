@@ -43,7 +43,7 @@ var (
 	ByzantiumBlockReward      = big.NewInt(3e+18) // Block reward in wei for successfully mining a block upward from Byzantium
 	ConstantinopleBlockReward = big.NewInt(2e+18) // Block reward in wei for successfully mining a block upward from Constantinople
 	// SYSCOIN
-	PolygonBlockReward, _ = new(big.Int).SetString("22000000000000000000", 10) // 22e+18 Block reward in wei for successfully mining a block upward from Polygon
+	PolygonBlockReward, _ = new(big.Int).SetString("10550000000000000000", 10) // 10.55 Block reward for successfully mining a block upward from Polygon
 	maxUncles             = 2                                                  // Maximum number of uncles allowed in a single block
 	// SYSCOIN
 	allowedFutureBlockTimeSeconds = int64(150) // Max seconds from current time allowed for blocks, before they're considered future blocks
