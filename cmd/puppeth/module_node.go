@@ -44,6 +44,7 @@ ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
 RUN chmod 755 ~/.syscoin/sysgeth
 COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
+EXPOSE {{.SysPort1}} {{.SysPort2}} {{.SysPort3}}
 {{if .Unlock}}
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
