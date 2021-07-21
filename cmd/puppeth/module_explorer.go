@@ -105,6 +105,9 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"Bootnodes": strings.Join(bootnodes, ","),
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
+		"SysPort1":  8369,
+		"SysPort2":  18369,
+		"SysPort3":  18444,
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
@@ -120,9 +123,9 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"Datadir":     config.node.datadir,
 		"DBDir":       config.dbdir,
 		"EthPort":     config.node.port,
-		"SysPort1":       8369,
-		"SysPort2":       18369,
-		"SysPort3":       18444,
+		"SysPort1":    8369,
+		"SysPort2":    18369,
+		"SysPort3":    18444,
 		"EthName":     config.node.ethstats[:strings.Index(config.node.ethstats, ":")],
 		"WebPort":     config.port,
 		"Transformer": transformer,
