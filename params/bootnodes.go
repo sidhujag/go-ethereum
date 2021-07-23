@@ -83,7 +83,7 @@ var TanenbaumBootnodes = []string{
 }
 
 var V5Bootnodes = []string{
-	"enode://8d90b80dc1ff64912d744ad0df1a6cdc8da7985db27f167b1c49658e88c554d10695b3797f7e08ba557fd9445d01ffa42b7c773adbf4825ffcaff1eb31c8abb6@18.118.194.233:30303",
+	"",
 }
 
 const dnsPrefix = "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@"
