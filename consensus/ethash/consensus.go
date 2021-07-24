@@ -43,7 +43,7 @@ var (
 	ByzantiumBlockReward      = big.NewInt(3e+18) // Block reward in wei for successfully mining a block upward from Byzantium
 	ConstantinopleBlockReward = big.NewInt(2e+18) // Block reward in wei for successfully mining a block upward from Constantinople
 	// SYSCOIN
-	PolygonBlockReward, _ = new(big.Int).SetString("10550000000000000000", 10) // 10.55 Block reward for successfully mining a block upward from Polygon
+	SyscoinBlockReward, _ = new(big.Int).SetString("10550000000000000000", 10) // 10.55 Block reward for successfully mining a block upward from Syscoin
 	maxUncles             = 2                                                  // Maximum number of uncles allowed in a single block
 	// SYSCOIN
 	allowedFutureBlockTimeSeconds = int64(150) // Max seconds from current time allowed for blocks, before they're considered future blocks
@@ -350,7 +350,7 @@ func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Heade
 	next := new(big.Int).Add(parent.Number, big1)
 	switch {
 	// SYSCOIN
-	case config.IsPolygon(next):
+	case config.IsSyscoin(next):
 		return big.NewInt(1)
 	case config.IsCatalyst(next):
 		return big.NewInt(1)
@@ -677,8 +677,8 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		blockReward = ConstantinopleBlockReward
 	}
 	// SYSCOIN
-	if config.IsPolygon(header.Number) {
-		blockReward = PolygonBlockReward
+	if config.IsSyscoin(header.Number) {
+		blockReward = SyscoinBlockReward
 	}
 	// Accumulate the rewards for the miner and any included uncles
 	reward := new(big.Int).Set(blockReward)

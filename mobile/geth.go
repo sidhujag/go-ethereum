@@ -179,8 +179,8 @@ func NewNode(datadir string, config *NodeConfig) (stack *Node, _ error) {
 				config.EthereumNetworkID = 5
 			}
 		}
-		if config.EthereumGenesis == PolygonGenesis() {
-			genesis.Config = params.PolygonChainConfig
+		if config.EthereumGenesis == SyscoinGenesis() {
+			genesis.Config = params.SyscoinChainConfig
 			if config.EthereumNetworkID == 1 {
 				config.EthereumNetworkID = 57
 			}

@@ -442,7 +442,7 @@ func (w *worker) mainLoop() {
 
 		case ev := <-w.chainSideCh:
 			// SYSCOIN no uncle for NEVM type network
-			if w.chainConfig.IsPolygon(ev.Block.Header().Number) {
+			if w.chainConfig.IsSyscoin(ev.Block.Header().Number) {
 				continue
 			}
 			// Short circuit for duplicate side blocks
@@ -627,7 +627,7 @@ func (w *worker) resultLoop() {
 				logs = append(logs, receipt.Logs...)
 			}
 			// SYSCOIN
-			if !w.chainConfig.IsPolygon(block.Header().Number) {
+			if !w.chainConfig.IsSyscoin(block.Header().Number) {
 				// Commit block and state to database.
 				_, err := w.chain.WriteBlockWithState(block, receipts, logs, task.state, true)
 				if err != nil {

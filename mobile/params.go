@@ -59,9 +59,9 @@ func GoerliGenesis() string {
 	return string(enc)
 }
 
-// SYSCOIN PolygonGenesis returns the JSON spec to use for the Goerli test network
-func PolygonGenesis() string {
-	enc, err := json.Marshal(core.DefaultPolygonGenesisBlock())
+// SYSCOIN SyscoinGenesis returns the JSON spec to use for the Goerli test network
+func SyscoinGenesis() string {
+	enc, err := json.Marshal(core.DefaultSyscoinGenesisBlock())
 	if err != nil {
 		panic(err)
 	}

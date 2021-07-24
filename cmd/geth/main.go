@@ -141,7 +141,7 @@ var (
 		utils.RinkebyFlag,
 		utils.GoerliFlag,
 		utils.CalaverasFlag,
-		utils.PolygonFlag,
+		utils.SyscoinFlag,
 		utils.TanenbaumFlag,
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
@@ -283,8 +283,8 @@ func prepare(ctx *cli.Context) {
 	case ctx.GlobalIsSet(utils.CalaverasFlag.Name):
 		log.Info("Starting Geth on Calaveras testnet...")
 
-	case ctx.GlobalIsSet(utils.PolygonFlag.Name):
-		log.Info("Starting Geth on Polygon...")
+	case ctx.GlobalIsSet(utils.SyscoinFlag.Name):
+		log.Info("Starting Geth on Syscoin...")
 
 	case ctx.GlobalIsSet(utils.TanenbaumFlag.Name):
 		log.Info("Starting Geth on Tanenbaum testnet...")

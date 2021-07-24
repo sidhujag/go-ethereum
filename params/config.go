@@ -32,7 +32,7 @@ var (
 	RinkebyGenesisHash   = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 	GoerliGenesisHash    = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	CalaverasGenesisHash = common.HexToHash("0xeb9233d066c275efcdfed8037f4fc082770176aefdbcb7691c71da412a5670f2")
-	PolygonGenesisHash   = common.HexToHash("0x06213eb0669345b6b106bb19d9e2e198a8c06eae3a50e0f303a046ca6afd277f")
+	SyscoinGenesisHash   = common.HexToHash("0x06213eb0669345b6b106bb19d9e2e198a8c06eae3a50e0f303a046ca6afd277f")
 	TanenbaumGenesisHash = common.HexToHash("0x566d9454e219db7531bbfe882500cb12923ea22f5766917336a1cc81fc5b543d")
 )
 
@@ -43,7 +43,7 @@ var TrustedCheckpoints = map[common.Hash]*TrustedCheckpoint{
 	RopstenGenesisHash: RopstenTrustedCheckpoint,
 	RinkebyGenesisHash: RinkebyTrustedCheckpoint,
 	GoerliGenesisHash:  GoerliTrustedCheckpoint,
-	// PolygonGenesisHash: PolygonTrustedCheckpoint,
+	// SyscoinGenesisHash: SyscoinTrustedCheckpoint,
 	// TanenbaumGenesisHash: TanenbaumTrustedCheckpoint,
 }
 
@@ -54,7 +54,7 @@ var CheckpointOracles = map[common.Hash]*CheckpointOracleConfig{
 	RopstenGenesisHash: RopstenCheckpointOracle,
 	RinkebyGenesisHash: RinkebyCheckpointOracle,
 	GoerliGenesisHash:  GoerliCheckpointOracle,
-	// PolygonGenesisHash: PolygonCheckpointOracle,
+	// SyscoinGenesisHash: SyscoinCheckpointOracle,
 	// TanenbaumGenesisHash: TanenbaumCheckpointOracle,
 }
 
@@ -99,8 +99,8 @@ var (
 		Threshold: 2,
 	}
 
-	// SYSCOIN PolygonChainConfig is the chain parameters to run a node on the polygon network.
-	PolygonChainConfig = &ChainConfig{
+	// SYSCOIN SyscoinChainConfig is the chain parameters to run a node on the syscoin network.
+	SyscoinChainConfig = &ChainConfig{
 		ChainID:             big.NewInt(57),
 		HomesteadBlock:      big.NewInt(0),
 		DAOForkBlock:        big.NewInt(0),
@@ -116,20 +116,20 @@ var (
 		MuirGlacierBlock:    big.NewInt(0),
 		BerlinBlock:         big.NewInt(0),
 		LondonBlock:         big.NewInt(0),
-		PolygonBlock:        big.NewInt(0),
+		SyscoinBlock:        big.NewInt(0),
 		Ethash:              new(EthashConfig),
 	}
 
-	// PolygonTrustedCheckpoint contains the light client trusted checkpoint for the main network.
-	/*PolygonTrustedCheckpoint = &TrustedCheckpoint{
+	// SyscoinTrustedCheckpoint contains the light client trusted checkpoint for the main network.
+	/*SyscoinTrustedCheckpoint = &TrustedCheckpoint{
 		SectionIndex: 384,
 		SectionHead:  common.HexToHash("0xb583a0ead70324849c4caf923476de3645c0d2f707c86221ec8e40078bdd6884"),
 		CHTRoot:      common.HexToHash("0x6ecc993baad0c9f77fe9c4c13b89360112e5a0accae4d8502470b911211618b7"),
 		BloomRoot:    common.HexToHash("0x66a30d8885c19921711704921de7b4bcbd1b49191b197ee79e34dafeed9a04d9"),
 	}
 
-	// PolygonCheckpointOracle contains a set of configs for the polygon network oracle.
-	PolygonCheckpointOracle = &CheckpointOracleConfig{
+	// SyscoinCheckpointOracle contains a set of configs for the syscoin network oracle.
+	SyscoinCheckpointOracle = &CheckpointOracleConfig{
 		Address: common.HexToAddress("0x9a9070028361F7AAbeB3f2F2Dc07F82C4a98A02a"),
 		Signers: []common.Address{
 			common.HexToAddress("0x1b2C260efc720BE89101890E4Db589b44E950527"), // Peter
@@ -156,7 +156,7 @@ var (
 		MuirGlacierBlock:    big.NewInt(0),
 		BerlinBlock:         big.NewInt(0),
 		LondonBlock:         big.NewInt(0),
-		PolygonBlock:        big.NewInt(0),
+		SyscoinBlock:        big.NewInt(0),
 		Ethash:              new(EthashConfig),
 	}
 
@@ -421,7 +421,7 @@ type ChainConfig struct {
 	MuirGlacierBlock    *big.Int `json:"muirGlacierBlock,omitempty"`    // Eip-2384 (bomb delay) switch block (nil = no fork, 0 = already activated)
 	BerlinBlock         *big.Int `json:"berlinBlock,omitempty"`         // Berlin switch block (nil = no fork, 0 = already on berlin)
 	LondonBlock         *big.Int `json:"londonBlock,omitempty"`         // London switch block (nil = no fork, 0 = already on london)
-	PolygonBlock        *big.Int `json:"polygonBlock,omitempty"`        // Polygon switch block (nil = no fork, 0 = already on polygon)
+	SyscoinBlock        *big.Int `json:"syscoinBlock,omitempty"`        // Syscoin switch block (nil = no fork, 0 = already on syscoin)
 
 	EWASMBlock    *big.Int `json:"ewasmBlock,omitempty"`    // EWASM switch block (nil = no fork, 0 = already activated)
 	CatalystBlock *big.Int `json:"catalystBlock,omitempty"` // Catalyst switch block (nil = no fork, 0 = already on catalyst)
@@ -461,7 +461,7 @@ func (c *ChainConfig) String() string {
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v Petersburg: %v Istanbul: %v, Muir Glacier: %v, Berlin: %v, London: %v, Polygon: %v, Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Homestead: %v DAO: %v DAOSupport: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v Petersburg: %v Istanbul: %v, Muir Glacier: %v, Berlin: %v, London: %v, Syscoin: %v, Engine: %v}",
 		c.ChainID,
 		c.HomesteadBlock,
 		c.DAOForkBlock,
@@ -476,7 +476,7 @@ func (c *ChainConfig) String() string {
 		c.MuirGlacierBlock,
 		c.BerlinBlock,
 		c.LondonBlock,
-		c.PolygonBlock,
+		c.SyscoinBlock,
 		engine,
 	)
 }
@@ -553,9 +553,9 @@ func (c *ChainConfig) IsEWASM(num *big.Int) bool {
 	return isForked(c.EWASMBlock, num)
 }
 
-// SYSCOIN IsPolygon returns whether num is either equal to the Polygon fork block or greater.
-func (c *ChainConfig) IsPolygon(num *big.Int) bool {
-	return isForked(c.PolygonBlock, num)
+// SYSCOIN IsSyscoin returns whether num is either equal to the Syscoin fork block or greater.
+func (c *ChainConfig) IsSyscoin(num *big.Int) bool {
+	return isForked(c.SyscoinBlock, num)
 }
 
 // CheckCompatible checks whether scheduled fork transitions have been imported
@@ -598,7 +598,7 @@ func (c *ChainConfig) CheckConfigForkOrder() error {
 		{name: "muirGlacierBlock", block: c.MuirGlacierBlock, optional: true},
 		{name: "berlinBlock", block: c.BerlinBlock},
 		{name: "londonBlock", block: c.LondonBlock},
-		{name: "polygonBlock", block: c.PolygonBlock},
+		{name: "syscoinBlock", block: c.SyscoinBlock},
 	} {
 		if lastFork.name != "" {
 			// Next one must be higher number
@@ -672,8 +672,8 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, head *big.Int) *Confi
 		return newCompatError("ewasm fork block", c.EWASMBlock, newcfg.EWASMBlock)
 	}
 	// SYSCOIN
-	if isForkIncompatible(c.PolygonBlock, newcfg.PolygonBlock, head) {
-		return newCompatError("polygon fork block", c.PolygonBlock, newcfg.PolygonBlock)
+	if isForkIncompatible(c.SyscoinBlock, newcfg.SyscoinBlock, head) {
+		return newCompatError("syscoin fork block", c.SyscoinBlock, newcfg.SyscoinBlock)
 	}
 	return nil
 }
@@ -742,7 +742,7 @@ type Rules struct {
 	ChainID                                                 *big.Int
 	IsHomestead, IsEIP150, IsEIP155, IsEIP158               bool
 	IsByzantium, IsConstantinople, IsPetersburg, IsIstanbul bool
-	IsBerlin, IsLondon, IsCatalyst, IsPolygon               bool
+	IsBerlin, IsLondon, IsCatalyst, IsSyscoin               bool
 }
 
 // Rules ensures c's ChainID is not nil.
@@ -764,6 +764,6 @@ func (c *ChainConfig) Rules(num *big.Int) Rules {
 		IsBerlin:         c.IsBerlin(num),
 		IsLondon:         c.IsLondon(num),
 		IsCatalyst:       c.IsCatalyst(num),
-		IsPolygon:        c.IsPolygon(num),
+		IsSyscoin:        c.IsSyscoin(num),
 	}
 }

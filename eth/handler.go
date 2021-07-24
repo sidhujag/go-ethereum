@@ -72,7 +72,7 @@ type txPool interface {
 	// NewTxsEvent and send events to the given channel.
 	SubscribeNewTxsEvent(chan<- core.NewTxsEvent) event.Subscription
 
-	// SYSCOIN get chainconfig for peer interface to know if its a polygon compliant network (enforce that no blocks are outgoing)
+	// SYSCOIN get chainconfig for peer interface to know if its a syscoin compliant network (enforce that no blocks are outgoing)
 	GetChainConfig() *params.ChainConfig
 }
 

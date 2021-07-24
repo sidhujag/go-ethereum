@@ -937,7 +937,7 @@ func (pool *TxPool) Get(hash common.Hash) *types.Transaction {
 	return pool.all.Get(hash)
 }
 
-// SYSCOIN get chainconfig so we can detect if we are polygon network inside of peer
+// SYSCOIN get chainconfig so we can detect if we are syscoin network inside of peer
 func (pool *TxPool) GetChainConfig() *params.ChainConfig {
 	return pool.chainconfig
 }

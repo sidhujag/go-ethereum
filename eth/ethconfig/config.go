@@ -214,7 +214,7 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		return clique.New(chainConfig.Clique, db)
 	}
 	// SYSCOIN
-	if chainConfig.ChainID == params.PolygonChainConfig.ChainID || chainConfig.ChainID == params.TanenbaumChainConfig.ChainID {
+	if chainConfig.ChainID == params.SyscoinChainConfig.ChainID || chainConfig.ChainID == params.TanenbaumChainConfig.ChainID {
 		config.PowMode = ethash.ModeNEVM
 	}
 	// Otherwise assume proof-of-work

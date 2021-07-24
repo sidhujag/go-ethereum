@@ -250,8 +250,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.GoerliChainConfig
 	case ghash == params.CalaverasGenesisHash:
 		return params.CalaverasChainConfig
-	case ghash == params.PolygonGenesisHash:
-		return params.PolygonChainConfig
+	case ghash == params.SyscoinGenesisHash:
+		return params.SyscoinChainConfig
 	case ghash == params.TanenbaumGenesisHash:
 		return params.TanenbaumChainConfig
 	default:
@@ -416,10 +416,10 @@ func DefaultCalaverasGenesisBlock() *Genesis {
 }
 
 // SYSCOIN
-func DefaultPolygonGenesisBlock() *Genesis {
+func DefaultSyscoinGenesisBlock() *Genesis {
 	// Full genesis: https://gist.github.com/holiman/c6ed9269dce28304ad176314caa75e97
 	return &Genesis{
-		Config:     params.PolygonChainConfig,
+		Config:     params.SyscoinChainConfig,
 		Timestamp:  0x60d7aef6,
 		ExtraData:  hexutil.MustDecode("0x00"),
 		GasLimit:   0x47b760,

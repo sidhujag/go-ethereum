@@ -191,8 +191,8 @@ func TestGenesisHashes(t *testing.T) {
 		},
 		// SYSCOIN
 		{
-			genesis: DefaultPolygonGenesisBlock(),
-			hash:    params.PolygonGenesisHash,
+			genesis: DefaultSyscoinGenesisBlock(),
+			hash:    params.SyscoinGenesisHash,
 		},
 		{
 			genesis: DefaultTanenbaumGenesisBlock(),

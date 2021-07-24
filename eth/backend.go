@@ -613,7 +613,7 @@ func (s *Ethereum) StartMining(threads int) error {
 		// introduced to speed sync times.
 		atomic.StoreUint32(&s.handler.acceptTxs, 1)
 		// SYSCOIN Skip miner start and disable presealing in NEVM mode, since PoW is on Syscoin
-		if s.miner.ChainConfig().PolygonBlock == nil {
+		if s.miner.ChainConfig().SyscoinBlock == nil {
 			go s.miner.Start(eb)
 		} else {
 			log.Info("Skip networking start...")
@@ -679,7 +679,7 @@ func (s *Ethereum) Start() error {
 		maxPeers -= s.config.LightPeers
 	}
 	// SYSCOIN Start the networking layer and the light server if requested
-	if s.miner.ChainConfig().PolygonBlock != nil {
+	if s.miner.ChainConfig().SyscoinBlock != nil {
 		log.Info("Skip networking and peering...")
 		s.handler.maxPeers = maxPeers
 		s.handler.peers.close()

@@ -155,9 +155,9 @@ var (
 		Name:  "calaveras",
 		Usage: "Calaveras network: pre-configured proof-of-authority shortlived test network.",
 	}
-	PolygonFlag = cli.BoolFlag{
-		Name:  "polygon",
-		Usage: "Polygon network: pre-configured NEVM-based polygon network.",
+	SyscoinFlag = cli.BoolFlag{
+		Name:  "syscoin",
+		Usage: "Syscoin network: pre-configured NEVM-based syscoin network.",
 	}
 	TanenbaumFlag = cli.BoolFlag{
 		Name:  "tanenbaum",
@@ -809,8 +809,8 @@ func MakeDataDir(ctx *cli.Context) string {
 		if ctx.GlobalBool(CalaverasFlag.Name) {
 			return filepath.Join(path, "calaveras")
 		}
-		if ctx.GlobalBool(PolygonFlag.Name) {
-			return filepath.Join(path, "polygon")
+		if ctx.GlobalBool(SyscoinFlag.Name) {
+			return filepath.Join(path, "syscoin")
 		}
 		if ctx.GlobalBool(TanenbaumFlag.Name) {
 			return filepath.Join(path, "tanenbaum")
@@ -869,8 +869,8 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 		urls = params.GoerliBootnodes
 	case ctx.GlobalBool(CalaverasFlag.Name):
 		urls = params.CalaverasBootnodes
-	case ctx.GlobalBool(PolygonFlag.Name):
-		urls = params.PolygonBootnodes
+	case ctx.GlobalBool(SyscoinFlag.Name):
+		urls = params.SyscoinBootnodes
 	case ctx.GlobalBool(TanenbaumFlag.Name):
 		urls = params.TanenbaumBootnodes
 	case cfg.BootstrapNodes != nil:
@@ -1318,8 +1318,8 @@ func setDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "goerli")
 	case ctx.GlobalBool(CalaverasFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "calaveras")
-	case ctx.GlobalBool(PolygonFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "polygon")
+	case ctx.GlobalBool(SyscoinFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "syscoin")
 	case ctx.GlobalBool(TanenbaumFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "tanenbaum")
 	}
@@ -1508,7 +1508,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, RopstenFlag, RinkebyFlag, GoerliFlag, CalaverasFlag, PolygonFlag, TanenbaumFlag)
+	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, RopstenFlag, RinkebyFlag, GoerliFlag, CalaverasFlag, SyscoinFlag, TanenbaumFlag)
 	CheckExclusive(ctx, LightServeFlag, SyncModeFlag, "light")
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 	if ctx.GlobalString(GCModeFlag.Name) == "archive" && ctx.GlobalUint64(TxLookupLimitFlag.Name) != 0 {
@@ -1673,12 +1673,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		cfg.Genesis = core.DefaultGoerliGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.GoerliGenesisHash)
 	// SYSCOIN
-	case ctx.GlobalBool(PolygonFlag.Name):
+	case ctx.GlobalBool(SyscoinFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 57
 		}
-		cfg.Genesis = core.DefaultPolygonGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.PolygonGenesisHash)
+		cfg.Genesis = core.DefaultSyscoinGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.SyscoinGenesisHash)
 	case ctx.GlobalBool(TanenbaumFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 58
@@ -1881,8 +1881,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultGoerliGenesisBlock()
 	case ctx.GlobalBool(CalaverasFlag.Name):
 		genesis = core.DefaultCalaverasGenesisBlock()
-	case ctx.GlobalBool(PolygonFlag.Name):
-		genesis = core.DefaultPolygonGenesisBlock()
+	case ctx.GlobalBool(SyscoinFlag.Name):
+		genesis = core.DefaultSyscoinGenesisBlock()
 	case ctx.GlobalBool(TanenbaumFlag.Name):
 		genesis = core.DefaultTanenbaumGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):

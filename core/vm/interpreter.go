@@ -100,7 +100,7 @@ func NewEVMInterpreter(evm *EVM, cfg Config) *EVMInterpreter {
 		var jt JumpTable
 		switch {
 		// SYSCOIN
-		case evm.chainRules.IsPolygon:
+		case evm.chainRules.IsSyscoin:
 			jt = londonInstructionSet
 		case evm.chainRules.IsLondon:
 			jt = londonInstructionSet
