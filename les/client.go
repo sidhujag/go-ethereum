@@ -247,8 +247,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 			}
 			// start networking sync once we start inserting chain meaning we are likely finished with IBD
 			if !leth.handler.inited {
-				log.Info("Networking start...")
+				log.Info("Networking and peering start...")
 				leth.handler.start()
+				leth.peers.open()
 			}
 		} else {
 			log.Info("not building on tip, add to mapping...", "blockhash", nevmBlockConnect.Blockhash, "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
@@ -458,6 +459,7 @@ func (s *LightEthereum) Start() error {
 		s.handler.start()
 	} else {
 		log.Info("Skip networking start...")
+		s.peers.close()
 	}
 
 	return nil

@@ -357,8 +357,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			}
 			// start networking sync once we start inserting chain meaning we are likely finished with IBD
 			if !eth.handler.inited {
-				log.Info("Networking start...")
+				log.Info("Networking and peering start...")
 				eth.handler.Start(eth.handler.maxPeers)
+				eth.handler.peers.open()
+				eth.Downloader().Peers().Open()
+				eth.p2pServer.Start()
 			}
 		} else {
 			log.Info("not building on tip, add to mapping...", "blockhash", nevmBlockConnect.Blockhash, "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
@@ -677,8 +680,11 @@ func (s *Ethereum) Start() error {
 	}
 	// SYSCOIN Start the networking layer and the light server if requested
 	if s.miner.ChainConfig().PolygonBlock != nil {
-		log.Info("Skip networking start...")
+		log.Info("Skip networking and peering...")
 		s.handler.maxPeers = maxPeers
+		s.handler.peers.close()
+		s.Downloader().Peers().Close()
+		s.p2pServer.Stop()
 	} else {
 		s.handler.Start(maxPeers)
 	}
