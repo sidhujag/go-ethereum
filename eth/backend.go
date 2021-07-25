@@ -113,6 +113,8 @@ type Ethereum struct {
 	wgNEVM            sync.WaitGroup
 	minedNEVMBlockSub *event.TypeMuxSubscription
 	zmqRep            *ZMQRep
+	timeLastBlock		int64
+	startNetwork		bool
 }
 
 // New creates a new Ethereum object (including the
@@ -355,13 +357,35 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			} else {
 				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 			}
+			eth.lock.Lock()
+			eth.timeLastBlock = time.Now().Unix()
+			eth.lock.Unlock()
 			// start networking sync once we start inserting chain meaning we are likely finished with IBD
-			if !eth.handler.inited {
-				log.Info("Networking and peering start...")
-				eth.handler.Start(eth.handler.maxPeers)
-				eth.handler.peers.open()
-				eth.Downloader().Peers().Open()
-				eth.p2pServer.Start()
+			if !eth.startNetwork {
+				log.Info("Attempt to start networking/peering...")
+				go func(eth *Ethereum) {
+					for {
+						time.Sleep(100)
+						eth.lock.Lock()
+						if eth.handler.inited && eth.handler.peers.closed {
+							log.Info("Networking stopped, return without starting peering...")
+							eth.lock.Unlock()
+							return
+						}
+						// ensure 5 seconds has passed between blocks before we start peering so we are sure sync has finished
+						if time.Now().Unix() - eth.timeLastBlock >= 5 {
+							log.Info("Networking and peering start...")
+							eth.handler.Start(eth.handler.maxPeers)
+							eth.handler.peers.open()
+							eth.Downloader().Peers().Open()
+							eth.p2pServer.Start()
+							eth.lock.Unlock()
+							return
+						}
+						eth.lock.Unlock()
+					}
+				}(eth)
+				eth.startNetwork = true
 			}
 		} else {
 			log.Info("not building on tip, add to mapping...", "blockhash", nevmBlockConnect.Blockhash, "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
