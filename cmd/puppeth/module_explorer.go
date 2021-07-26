@@ -33,7 +33,8 @@ var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM puppeth/blockscout:latest
 
-COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /home/syscoin/.syscoin/
+RUN rm /usr/local/bin/geth
+COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /opt/app/.syscoin/
 COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
 ENV LC_ALL C
 RUN \
