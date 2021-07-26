@@ -54,33 +54,33 @@ var explorerComposefile = `
 version: '2'
 services:
     explorer:
-		build:
-			context: .
-			args:
-				COIN: SYS
+        build:
+            context: .
+            args:
+                COIN: SYS
         image: {{.Network}}/explorer
         container_name: {{.Network}}_explorer_1
         ports:
-			- "{{.EthPort}}:{{.EthPort}}"
-			- "{{.SysPort1}}:{{.SysPort1}}"
-			- "{{.SysPort2}}:{{.SysPort2}}"
-			- "{{.SysPort3}}:{{.SysPort3}}"
+            - "{{.EthPort}}:{{.EthPort}}"
+            - "{{.SysPort1}}:{{.SysPort1}}"
+            - "{{.SysPort2}}:{{.SysPort2}}"
+            - "{{.SysPort3}}:{{.SysPort3}}"
             - "{{.EthPort}}:{{.EthPort}}/udp"{{if not .VHost}}
             - "{{.WebPort}}:4000"{{end}}
         environment:
-			- ETH_PORT={{.EthPort}}
-			- SYSPORT1={{.SysPort1}}/tcp
-			- SYSPORT2={{.SysPort2}}/tcp
-			- SYSPORT3={{.SysPort3}}/tcp
-			- NETWORK=Syscoin{{if eq .NetworkID 58}}
-			- SUBNETWORK=Tanenbaum{{end}}
-			- COINGECKO_COIN_ID=syscoin
-			- COIN=SYS
-			- LOGO=/images/blockscout_logo.svg
-			- LOGO_FOOTER=/images/blockscout_logo.svg
-			- LOGO_TEXT=NEVM
-			- CHAIN_ID={{.NetworkID}}
-			- HEALTHY_BLOCKS_PERIOD={{.150000}}
+            - ETH_PORT={{.EthPort}}
+            - SYSPORT1={{.SysPort1}}/tcp
+            - SYSPORT2={{.SysPort2}}/tcp
+            - SYSPORT3={{.SysPort3}}/tcp
+            - NETWORK=Syscoin{{if eq .NetworkID 58}}
+            - SUBNETWORK=Tanenbaum{{end}}
+            - COINGECKO_COIN_ID=syscoin
+            - COIN=SYS
+            - LOGO=/images/blockscout_logo.svg
+            - LOGO_FOOTER=/images/blockscout_logo.svg
+            - LOGO_TEXT=NEVM
+            - CHAIN_ID={{.NetworkID}}
+            - HEALTHY_BLOCKS_PERIOD={{.150000}}
             - ETH_NAME={{.EthName}}
             - BLOCK_TRANSFORMER={{.Transformer}}{{if .VHost}}
             - VIRTUAL_HOST={{.VHost}}
