@@ -31,17 +31,10 @@ import (
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
-FROM sidhujag/client-go:latest as geth-alpine
 FROM puppeth/blockscout:latest
 
-RUN mkdir ~/.syscoin
-RUN apk add --no-cache wget
-RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/gethdescriptor.json
-
-ENV SYSCOIN_VERSION=4.3.99
-ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
-COPY --from=geth-alpine /usr/local/bin/geth ~/.syscoin/sysgeth
-COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
+COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /home/syscoin/.syscoin/
+COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
 EXPOSE {{.SysPort1}} {{.SysPort2}} {{.SysPort3}}
 ENV LC_ALL C
 RUN \
@@ -61,7 +54,10 @@ var explorerComposefile = `
 version: '2'
 services:
     explorer:
-        build: .
+		build:
+			context: .
+			args:
+				COIN: SYS
         image: {{.Network}}/explorer
         container_name: {{.Network}}_explorer_1
         ports:
@@ -76,6 +72,15 @@ services:
 			- SYSPORT1={{.SysPort1}}/tcp
 			- SYSPORT2={{.SysPort2}}/tcp
 			- SYSPORT3={{.SysPort3}}/tcp
+			- NETWORK=Syscoin{{if eq .NetworkID 58}}
+			- SUBNETWORK=Tanenbaum{{end}}
+			- COINGECKO_COIN_ID=syscoin
+			- COIN=SYS
+			- LOGO=/images/blockscout_logo.svg
+			- LOGO_FOOTER=/images/blockscout_logo.svg
+			- LOGO_TEXT=NEVM
+			- CHAIN_ID={{.NetworkID}}
+			- HEALTHY_BLOCKS_PERIOD={{.150000}}
             - ETH_NAME={{.EthName}}
             - BLOCK_TRANSFORMER={{.Transformer}}{{if .VHost}}
             - VIRTUAL_HOST={{.VHost}}

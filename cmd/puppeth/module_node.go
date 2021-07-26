@@ -32,19 +32,8 @@ import (
 
 // nodeDockerfile is the Dockerfile required to run an Ethereum node.
 var nodeDockerfile = `
-FROM sidhujag/syscoin-core:latest as syscoin-alpine
+FROM sidhujag/syscoin-core:latest
 
-FROM sidhujag/client-go:latest
-RUN apk add --no-cache wget
-RUN mkdir ~/.syscoin
-RUN wget https://raw.githubusercontent.com/syscoin/descriptors/{{if eq .NetworkID 58}}testnet{{else}}master{{end}}/gethdescriptor.json -O ~/.syscoin/gethdescriptor.json
-
-ENV SYSCOIN_VERSION=4.3.99
-ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
-RUN mv /usr/local/bin/geth ~/.syscoin/sysgeth
-RUN chmod 755 ~/.syscoin/sysgeth
-COPY --from=syscoin-alpine /opt/syscoin-${SYSCOIN_VERSION}/bin/syscoind /usr/local/bin/
-EXPOSE {{.SysPort1}} {{.SysPort2}} {{.SysPort3}}
 {{if .Unlock}}
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
@@ -116,9 +105,6 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 	template.Must(template.New("").Parse(nodeDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.network,
 		"Port":      config.port,
-		"SysPort1":  8369,
-		"SysPort2":  18369,
-		"SysPort3":  18444,
 		"IP":        client.address,
 		"Peers":     config.peersTotal,
 		"LightFlag": lightFlag,
