@@ -35,7 +35,6 @@ FROM puppeth/blockscout:latest
 
 COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /home/syscoin/.syscoin/
 COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
-EXPOSE {{.SysPort1}} {{.SysPort2}} {{.SysPort3}}
 ENV LC_ALL C
 RUN \
   echo $'syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --exitwhensynced' >> explorer.sh && \
@@ -110,9 +109,6 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"Bootnodes": strings.Join(bootnodes, ","),
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
-		"SysPort1":  8369,
-		"SysPort2":  18369,
-		"SysPort3":  18444,
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
