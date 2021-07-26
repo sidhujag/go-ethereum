@@ -357,9 +357,11 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 			} else {
 				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 			}
-			eth.lock.Lock()
-			eth.timeLastBlock = time.Now().Unix()
-			eth.lock.Unlock()
+			if !eth.handler.inited {
+				eth.lock.Lock()
+				eth.timeLastBlock = time.Now().Unix()
+				eth.lock.Unlock()
+			}
 			// start networking sync once we start inserting chain meaning we are likely finished with IBD
 			if !eth.startNetwork {
 				log.Info("Attempt to start networking/peering...")
