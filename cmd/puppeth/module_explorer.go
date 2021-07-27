@@ -36,7 +36,7 @@ FROM puppeth/blockscout:latest
 RUN rm /usr/local/bin/geth
 COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /opt/app/.syscoin/
 COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
-ENV LC_ALL C
+ENV POSTGRES_HOST_AUTH_METHOD=trust
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
