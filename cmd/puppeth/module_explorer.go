@@ -31,12 +31,11 @@ import (
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
-FROM puppeth/blockscout:latest
+FROM sidhujag/blockscout:latest
 
 RUN rm /usr/local/bin/geth
 COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /opt/app/.syscoin/
 COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
-ENV POSTGRES_HOST_AUTH_METHOD=trust
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
@@ -58,6 +57,7 @@ services:
             context: .
             args:
                 COIN: SYS
+                BLOCK_TRANSFORMER: {{.Transformer}}
         image: {{.Network}}/explorer
         container_name: {{.Network}}_explorer_1
         ports:
@@ -82,6 +82,7 @@ services:
             - CHAIN_ID={{.NetworkID}}
             - HEALTHY_BLOCKS_PERIOD={{.150000}}
             - ETH_NAME={{.EthName}}
+            - LINK_TO_OTHER_EXPLORERS=false
             - BLOCK_TRANSFORMER={{.Transformer}}{{if .VHost}}
             - VIRTUAL_HOST={{.VHost}}
             - VIRTUAL_PORT=4000{{end}}
