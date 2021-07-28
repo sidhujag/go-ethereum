@@ -34,7 +34,7 @@ import (
 var nodeDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM alpine:3.14
-COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /opt/app/.syscoin/
+COPY --from=syscoin-alpine /home/syscoin/.syscoin/* ~/.syscoin/
 COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
 
 {{if .Unlock}}
