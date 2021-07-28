@@ -42,7 +42,6 @@ COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
 	ADD signer.pass /signer.pass
 {{end}}
 
-COPY /home/syscoin/.syscoin/* ~/.syscoin/
 RUN \
     {{if .Unlock}}
 	echo 'mkdir -p ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
