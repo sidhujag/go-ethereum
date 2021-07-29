@@ -49,7 +49,7 @@ COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
 RUN \
     {{if .Unlock}}
 	echo 'mkdir -p ${SYSCOIN_DATA}/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json ${SYSCOIN_DATA}/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
-	echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
+	echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --datadir=${SYSCOIN_DATA} --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -70,7 +70,7 @@ services:
       - "{{.SysPort3}}:{{.SysPort3}}"
       - "{{.Port}}:{{.Port}}/udp"
     volumes:
-      - {{.Datadir}}:/home/syscoin/.ethereum{{if .Ethashdir}}
+      - {{.Datadir}}:/root/.ethereum{{if .Ethashdir}}
       - {{.Ethashdir}}:/root/.ethash{{end}}
     environment:
       - PORT={{.Port}}/tcp
@@ -270,7 +270,7 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 	// Assemble and return the useful infos
 	stats := &nodeInfos{
 		genesis:    genesis,
-		datadir:    infos.volumes["/home/syscoin/.ethereum"],
+		datadir:    infos.volumes["/root/.ethereum"],
 		ethashdir:  infos.volumes["/root/.ethash"],
 		port:       port,
 		peersTotal: totalPeers,
