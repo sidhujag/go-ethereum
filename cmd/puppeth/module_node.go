@@ -34,18 +34,22 @@ import (
 var nodeDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM alpine:3.14
-COPY --from=syscoin-alpine /home/syscoin/.syscoin/* ~/.syscoin/
-COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
 
 {{if .Unlock}}
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
 {{end}}
+ENV SYSCOIN_DATA=/home/syscoin/.syscoin
+ENV SYSCOIN_VERSION=4.3.99
+ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
+
+COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* ${SYSCOIN_DATA}/
+COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
 
 RUN \
     {{if .Unlock}}
-	echo 'mkdir -p ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json ~/.syscoin/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
-	echo $'exec syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
+	echo 'mkdir -p ${SYSCOIN_DATA}/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/ && cp /signer.json ${SYSCOIN_DATA}/{{if eq .NetworkID 58}}testnet3/{{end}}geth/keystore/' >> geth.sh && \{{end}}
+	echo $'exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--cache=512 --gethcommandline=--port={{.Port}} --gethcommandline=--nat=extip:{{.IP}} --gethcommandline=--maxpeers={{.Peers}} {{.LightFlag}} --gethcommandline=--ethstats={{.Ethstats}} {{if .Bootnodes}}--gethcommandline=--bootnodes={{.Bootnodes}}{{end}} {{if .Etherbase}}--gethcommandline=--miner.etherbase={{.Etherbase}} --gethcommandline=--mine --gethcommandline=--miner.threads=1{{end}} {{if .Unlock}}--gethcommandline=--unlock=0 --gethcommandline=--password=/signer.pass --gethcommandline=--mine{{end}} --gethcommandline=--miner.gastarget={{.GasTarget}} --gethcommandline=--miner.gaslimit={{.GasLimit}} --gethcommandline=--miner.gasprice={{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -66,7 +70,7 @@ services:
       - "{{.SysPort3}}:{{.SysPort3}}"
       - "{{.Port}}:{{.Port}}/udp"
     volumes:
-      - {{.Datadir}}:/root/.ethereum{{if .Ethashdir}}
+      - {{.Datadir}}:/home/syscoin/.ethereum{{if .Ethashdir}}
       - {{.Ethashdir}}:/root/.ethash{{end}}
     environment:
       - PORT={{.Port}}/tcp
@@ -241,7 +245,7 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 
 	// Container available, retrieve its node ID and its genesis json
 	var out []byte
-	if out, err = client.Run(fmt.Sprintf("docker exec %s_%s_1 ~/.syscoin/sysgeth --exec admin.nodeInfo.enode --cache=16 attach", network, kind)); err != nil {
+	if out, err = client.Run(fmt.Sprintf("docker exec %s_%s_1 /home/syscoin/.syscoin/sysgeth --exec admin.nodeInfo.enode --cache=16 attach", network, kind)); err != nil {
 		return nil, ErrServiceUnreachable
 	}
 	enode := bytes.Trim(bytes.TrimSpace(out), "\"")
@@ -266,7 +270,7 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 	// Assemble and return the useful infos
 	stats := &nodeInfos{
 		genesis:    genesis,
-		datadir:    infos.volumes["/root/.ethereum"],
+		datadir:    infos.volumes["/home/syscoin/.ethereum"],
 		ethashdir:  infos.volumes["/root/.ethash"],
 		port:       port,
 		peersTotal: totalPeers,

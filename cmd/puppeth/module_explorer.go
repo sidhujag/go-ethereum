@@ -33,16 +33,20 @@ var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM sidhujag/blockscout:latest
 
+ENV SYSCOIN_DATA=/home/syscoin/.syscoin
+ENV SYSCOIN_VERSION=4.3.99
+ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
+
 RUN rm /usr/local/bin/geth
-COPY --from=syscoin-alpine /home/syscoin/.syscoin/* /opt/app/.syscoin/
-COPY --from=syscoin-alpine /usr/local/bin/syscoind /usr/local/bin/syscoind
+COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* /opt/app/.syscoin/
+COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
     echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
     echo 'mix phx.server &' >> explorer.sh && \
-    echo $'LC_ALL=C syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --gethcommandline=--exitwhensynced' >> explorer.sh && \
-    echo $'LC_ALL=C exec syscoind {{if eq .NetworkID 58}}--regtest{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh
+    echo $'LC_ALL=C syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --gethcommandline=--exitwhensynced' >> explorer.sh && \
+    echo $'LC_ALL=C exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh
 
 ENTRYPOINT ["/bin/sh", "explorer.sh"]
 `
