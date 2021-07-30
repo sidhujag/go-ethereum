@@ -161,31 +161,30 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	subNetwork := ""
 	showPriceChart := "true"
 	disableExchangeRates := "false"
-	supportedChains := "[{\"title\":\"Syscoin\",\"url\":\"https://blockscout.com/rsk/mainnet\"}]"
+	supportedChains := `[{"title":"Syscoin","url":"https://blockscout.com/rsk/mainnet"}]`
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
 		disableExchangeRates = "false"
 		showPriceChart = "true"
-		supportedChains = "[{\"title\":\"Tanenbaum\",\"url\":\"https://blockscout.com/rsk/mainnet\",\"test_net?\":true}]"
+		supportedChains = `[{"title":"Tanenbaum","url":"https://blockscout.com/rsk/mainnet","test_net?":true}]`
 	}
 	host := config.host
 	if host == "" {
 		host = client.server
 	}
-	logoDir := filepath.Join(workdir, "logo.svg")
 	template.Must(template.New("").Parse(explorerDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.node.network,
 		"Bootnodes": strings.Join(bootnodes, ","),
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
-		"HttpUrl":   "http://" + host + ":8545",
-		"WsUrl":   "ws://" + host + ":8546",
+		"HttpUrl":   "http://localhost:8545",
+		"WsUrl":   "ws://localhost:8546",
 		"Network":   "Syscoin",
 		"SubNetwork": subNetwork,
 		"CoingeckoID":   "syscoin",
 		"Coin":   "SYS",
-		"Logo":   logoDir,
-		"LogoFooter":   logoDir,
+		"Logo":   "/images/blockscout_logo_sys.svg",
+		"LogoFooter":   "/images/blockscout_logo_sys.svg",
 		"LogoText":   "NEVM",
 		"HealthyBlockPeriod": 34500000,
 		"SupportedChains": supportedChains,
@@ -221,7 +220,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	})
 	files[filepath.Join(workdir, "docker-compose.yaml")] = composefile.Bytes()
 	files[filepath.Join(workdir, "genesis.json")] = config.node.genesis
-	files[logoDir] = logoSVG
+	files["/images/blockscout_logo_sys.svg"] = logoSVG
 	// Upload the deployment files to the remote server (and clean up afterwards)
 	if out, err := client.Upload(files); err != nil {
 		return out, err
