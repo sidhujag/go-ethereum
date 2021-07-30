@@ -64,7 +64,7 @@ ENV NETWORK={{.Network}} \
     SHOW_TXS_CHART={{.ShowTxChart}} \
     DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
     SHOW_PRICE_CHART={{.ShowPriceChart}} \
-    ETHEREUM_JSONRPC_HTTP_URL={{.HttpUrl}}  \
+    ETHEREUM_JSONRPC_HTTP_URL={{.HttpUrl}} \
     ETHEREUM_JSONRPC_WS_URL={{.WsUrl}}
 
 RUN \
