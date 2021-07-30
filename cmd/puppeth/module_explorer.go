@@ -179,7 +179,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
 		"HttpUrl":   "http://" + host + ":8545",
-		"WsUrl":   "http://" + host + ":8546",
+		"WsUrl":   "ws://" + host + ":8546",
 		"Network":   "Syscoin",
 		"SubNetwork": subNetwork,
 		"CoingeckoID":   "syscoin",
