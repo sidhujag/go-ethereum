@@ -31,6 +31,8 @@ import (
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
+ARG COIN
+ARG BLOCK_TRANSFORMER
 FROM sidhujag/blockscout:latest
 
 ENV SYSCOIN_DATA=/home/syscoin/.syscoin
