@@ -42,6 +42,18 @@ ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 RUN rm /usr/local/bin/geth
 COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* /opt/app/.syscoin/
 COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
+ENV NETWORK={{.Network}} \
+    SUBNETWORK={{.Subnetwork}} \
+	COINGECKO_COIN_ID={{.SubNetwork}} \
+	COIN={{.Coin}} \
+	LOGO={{.Logo}} \
+	LOGO_FOOTER={{.LogoFooter}} \
+	LOGO_TEXT={{.LogoText}} \
+	CHAIN_ID={{.NetworkID}} \
+	HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
+	LINK_TO_OTHER_EXPLORERS={{.LinkToOtherExplorers}} \
+	BLOCK_TRANSFORMER={{.BlockTransformer}}
+
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
@@ -75,20 +87,7 @@ services:
             - "{{.WebPort}}:4000"{{end}}
         environment:
             - ETH_PORT={{.EthPort}}
-            - SYSPORT1={{.SysPort1}}/tcp
-            - SYSPORT2={{.SysPort2}}/tcp
-            - SYSPORT3={{.SysPort3}}/tcp
-            - NETWORK=Syscoin{{if eq .NetworkID 58}}
-            - SUBNETWORK=Tanenbaum{{end}}
-            - COINGECKO_COIN_ID=syscoin
-            - COIN=SYS
-            - LOGO=/images/blockscout_logo.svg
-            - LOGO_FOOTER=/images/blockscout_logo.svg
-            - LOGO_TEXT=NEVM
-            - CHAIN_ID={{.NetworkID}}
-            - HEALTHY_BLOCKS_PERIOD={{.150000}}
             - ETH_NAME={{.EthName}}
-            - LINK_TO_OTHER_EXPLORERS=false
             - BLOCK_TRANSFORMER={{.Transformer}}{{if .VHost}}
             - VIRTUAL_HOST={{.VHost}}
             - VIRTUAL_PORT=4000{{end}}
@@ -110,20 +109,33 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	// Generate the content to upload to the server
 	workdir := fmt.Sprintf("%d", rand.Int63())
 	files := make(map[string][]byte)
-
+	transformer := "base"
+	if isClique {
+		transformer = "clique"
+	}
 	dockerfile := new(bytes.Buffer)
+	subNetwork := ""
+	if config.node.network == 58 {
+		subNetwork = "Tanenbaum"
+	}
 	template.Must(template.New("").Parse(explorerDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.node.network,
 		"Bootnodes": strings.Join(bootnodes, ","),
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
+		"Network":   "Syscoin",
+		"SubNetwork": subNetwork,
+		"CoingeckoID":   "syscoin",
+		"Coin":   "SYS",
+		"Logo":   "/images/blockscout_logo.svg",
+		"LogoFooter":   "/images/blockscout_logo.svg",
+		"LogoText":   "NEVM",
+		"HealthyBlockPeriod": 150000,
+		"LinkToOtherExplorers": false,
+		"BlockTransformer": transformer,
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
-	transformer := "base"
-	if isClique {
-		transformer = "clique"
-	}
 	composefile := new(bytes.Buffer)
 	template.Must(template.New("").Parse(explorerComposefile)).Execute(composefile, map[string]interface{}{
 		"Network":     network,
