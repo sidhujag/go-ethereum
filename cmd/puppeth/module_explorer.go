@@ -131,7 +131,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"LogoFooter":   "/images/blockscout_logo.svg",
 		"LogoText":   "NEVM",
 		"HealthyBlockPeriod": 150000,
-		"LinkToOtherExplorers": false,
+		"LinkToOtherExplorers": "false",
 		"BlockTransformer": transformer,
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
