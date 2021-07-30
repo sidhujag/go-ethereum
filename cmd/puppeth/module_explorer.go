@@ -110,10 +110,9 @@ services:
             max-file: "10"
         restart: always
 `
-// dashboardMascot is the png dump of the mascot to display on the dashboard about page.
+// logoSVG is the SVG logo for our explorer on the header and footer
 // nolint: misspell
-var logoSVG = []byte
-("<?xml version=\"1.0\" encoding=\"UTF-16\"?>
+var logoSVG = []byte(`"<?xml version=\"1.0\" encoding=\"UTF-16\"?>
 <!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">
 <!-- Creator: CorelDRAW 2020 (64-Bit) -->
 <svg xmlns=\"http://www.w3.org/2000/svg\" xml:space=\"preserve\" width=\"1145px\" height=\"263px\" version=\"1.1\" style=\"shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd\"
@@ -146,7 +145,7 @@ viewBox=\"0 0 1151.04 264.17\"
   </g>
   <rect class=\"fil5\" width=\"1151.04\" height=\"264.17\"/>
  </g>
-</svg>")
+</svg>"`)
 // deployExplorer deploys a new block explorer container to a remote machine via
 // SSH, docker and docker-compose. If an instance with the specified network name
 // already exists there, it will be overwritten!
