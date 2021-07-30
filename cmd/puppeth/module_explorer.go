@@ -43,7 +43,7 @@ RUN rm /usr/local/bin/geth
 COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* /opt/app/.syscoin/
 COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
 ENV NETWORK={{.Network}} \
-    SUBNETWORK={{.Subnetwork}} \
+    SUBNETWORK={{.SubNetwork}} \
 	COINGECKO_COIN_ID={{.CoingeckoID}} \
 	COIN={{.Coin}} \
 	LOGO={{.Logo}} \
