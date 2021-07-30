@@ -52,7 +52,8 @@ ENV NETWORK={{.Network}} \
 	CHAIN_ID={{.NetworkID}} \
 	HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
 	LINK_TO_OTHER_EXPLORERS={{.LinkToOtherExplorers}} \
-	BLOCK_TRANSFORMER={{.BlockTransformer}}
+	BLOCK_TRANSFORMER={{.BlockTransformer}} \
+	SHOW_TXS_CHART={{.ShowTxChart}}
 
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
@@ -133,6 +134,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"HealthyBlockPeriod": 150000,
 		"LinkToOtherExplorers": "false",
 		"BlockTransformer": transformer,
+		"ShowTxChart": "true",
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
