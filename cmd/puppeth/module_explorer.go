@@ -161,12 +161,12 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	subNetwork := ""
 	showPriceChart := "true"
 	disableExchangeRates := "false"
-	supportedChains := "[ { \"title\": \"Tanenbaum\", \"url\": \"https://blockscout.com/rsk/mainnet\", \"test_net?\": true } ]"
+	supportedChains := "[ { \"title\": \"Syscoin Mainnet\", \"url\": \"https://blockscout.com/rsk/mainnet\" } ]"
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
 		disableExchangeRates = "false"
 		showPriceChart = "true"
-		supportedChains = "[ { \"title\": \"Syscoin Mainnet\", \"url\": \"https://blockscout.com/rsk/mainnet\" } ]"
+		supportedChains = "[ { \"title\": \"Tanenbaum\", \"url\": \"https://blockscout.com/rsk/mainnet\", \"test_net?\": true } ]"
 	}
 	host := config.host
 	if host == "" {
