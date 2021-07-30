@@ -51,9 +51,11 @@ ENV NETWORK={{.Network}} \
 	LOGO_TEXT={{.LogoText}} \
 	CHAIN_ID={{.NetworkID}} \
 	HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
-	LINK_TO_OTHER_EXPLORERS={{.LinkToOtherExplorers}} \
+	SUPPORTED_CHAINS={{.SupportedChains}} \
 	BLOCK_TRANSFORMER={{.BlockTransformer}} \
-	SHOW_TXS_CHART={{.ShowTxChart}}
+	SHOW_TXS_CHART={{.ShowTxChart}} \
+	DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
+	SHOW_PRICE_CHART={{.ShowPriceChart}}
 
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
@@ -116,8 +118,14 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	}
 	dockerfile := new(bytes.Buffer)
 	subNetwork := ""
+	showPriceChart := "true"
+	disableExchangeRates := "false"
+	supportedChains := "[ { \"title\": \"Tanenbaum\", \"url\": \"https://blockscout.com/rsk/mainnet\", \"test_net?\": true } ]"
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
+		disableExchangeRates = "false"
+		showPriceChart = "true"
+		supportedChains = "[ { \"title\": \"Syscoin Mainnet\", \"url\": \"https://blockscout.com/rsk/mainnet\" } ]"
 	}
 	template.Must(template.New("").Parse(explorerDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.node.network,
@@ -132,9 +140,12 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"LogoFooter":   "/images/blockscout_logo.svg",
 		"LogoText":   "NEVM",
 		"HealthyBlockPeriod": 150000,
-		"LinkToOtherExplorers": "false",
+		"SupportedChains": supportedChains,
 		"BlockTransformer": transformer,
 		"ShowTxChart": "true",
+		"DisableExchangeRates": disableExchangeRates,
+		"ShowPriceChart": showPriceChart,
+
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
