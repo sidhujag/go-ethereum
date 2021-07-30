@@ -187,7 +187,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"Logo":   logoDir,
 		"LogoFooter":   logoDir,
 		"LogoText":   "NEVM",
-		"HealthyBlockPeriod": 150000,
+		"HealthyBlockPeriod": 34500000,
 		"SupportedChains": supportedChains,
 		"BlockTransformer": transformer,
 		"ShowTxChart": "true",
