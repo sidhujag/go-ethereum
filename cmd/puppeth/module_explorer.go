@@ -52,18 +52,20 @@ COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* /opt/app/.syscoin/
 COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
 ENV NETWORK={{.Network}} \
     SUBNETWORK={{.SubNetwork}} \
-	COINGECKO_COIN_ID={{.CoingeckoID}} \
-	COIN={{.Coin}} \
-	LOGO={{.Logo}} \
-	LOGO_FOOTER={{.LogoFooter}} \
-	LOGO_TEXT={{.LogoText}} \
-	CHAIN_ID={{.NetworkID}} \
-	HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
-	SUPPORTED_CHAINS={{.SupportedChains}} \
-	BLOCK_TRANSFORMER={{.BlockTransformer}} \
-	SHOW_TXS_CHART={{.ShowTxChart}} \
-	DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
-	SHOW_PRICE_CHART={{.ShowPriceChart}}
+    COINGECKO_COIN_ID={{.CoingeckoID}} \
+    COIN={{.Coin}} \
+    LOGO={{.Logo}} \
+    LOGO_FOOTER={{.LogoFooter}} \
+    LOGO_TEXT={{.LogoText}} \
+    CHAIN_ID={{.NetworkID}} \
+    HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
+    SUPPORTED_CHAINS={{.SupportedChains}} \
+    BLOCK_TRANSFORMER={{.BlockTransformer}} \
+    SHOW_TXS_CHART={{.ShowTxChart}} \
+    DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
+    SHOW_PRICE_CHART={{.ShowPriceChart}} \
+    ETHEREUM_JSONRPC_HTTP_URL={{.HttpUrl}}  \
+    ETHEREUM_JSONRPC_WS_URL={{.WsUrl}}
 
 RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
@@ -167,12 +169,18 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		showPriceChart = "true"
 		supportedChains = "[ { \"title\": \"Syscoin Mainnet\", \"url\": \"https://blockscout.com/rsk/mainnet\" } ]"
 	}
+	host := config.host
+	if host == "" {
+		host = client.server
+	}
 	logoDir := filepath.Join(workdir, "logo.svg")
 	template.Must(template.New("").Parse(explorerDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.node.network,
 		"Bootnodes": strings.Join(bootnodes, ","),
 		"Ethstats":  config.node.ethstats,
 		"EthPort":   config.node.port,
+		"HttpUrl":   "http://" + host + ":8545",
+		"WsUrl":   "http://" + host + ":8546",
 		"Network":   "Syscoin",
 		"SubNetwork": subNetwork,
 		"CoingeckoID":   "syscoin",
