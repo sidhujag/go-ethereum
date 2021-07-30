@@ -33,6 +33,14 @@ var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
 ARG COIN={{.Coin}}
 ARG BLOCK_TRANSFORMER={{.BlockTransformer}}
+ARG CSS_PRIMARY={{.CssPrimary}}
+ARG CSS_SECONDARY={{.CssSecondary}}
+ARG CSS_TERTIARY={{.CssTertiary}}
+ARG CSS_PRIMARY_DARK={{.CssPrimaryDark}}
+ARG CSS_SECONDARY_DARK={{.CssSecondaryDark}}
+ARG CSS_TERTIARY_DARK={{.CssTertiaryDark}}
+ARG CSS_FOOTER_BACKGROUND={{.CssFooterBackground}}
+ARG CSS_FOOTER_TEXT={{.CssFooterText}}
 FROM sidhujag/blockscout:latest
 
 ENV SYSCOIN_DATA=/home/syscoin/.syscoin
@@ -74,6 +82,7 @@ var explorerComposefile = `
 version: '2'
 services:
     explorer:
+        build: .
         image: {{.Network}}/explorer
         container_name: {{.Network}}_explorer_1
         ports:
@@ -140,7 +149,14 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"ShowTxChart": "true",
 		"DisableExchangeRates": disableExchangeRates,
 		"ShowPriceChart": showPriceChart,
-
+		"CssPrimary": "#257db8",
+		"CssSecondary": "#87e1a9",
+		"CssTertiary": "#6fB8df",
+		"CssPrimaryDark": "#6fB8df",
+		"CssSecondaryDark": "#87e1a9",
+		"CssTertiaryDark": "#257db8",
+		"CssFooterBackground": "#101d49",
+		"CssFooterText": "#6fB8df",
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
