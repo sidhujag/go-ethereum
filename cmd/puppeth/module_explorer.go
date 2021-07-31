@@ -76,11 +76,12 @@ RUN if [ "$CSS_SECONDARY" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY}"/g 
 RUN if [ "$CSS_SECONDARY" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables-non-critical.scss; fi
 RUN if [ "$CSS_SECONDARY" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
 
-RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#bf9cff"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#8258cd"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
 RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#bf9cff"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables-non-critical.scss; fi
 RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#997fdc"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
 
 RUN if [ "$CSS_PRIMARY_DARK" != "" ]; then sed -i s/"#9b62ff"/"${CSS_PRIMARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_PRIMARY_DARK" != "" ]; then sed -i s/"#bf9cff"/"${CSS_PRIMARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
 RUN if [ "$CSS_PRIMARY_DARK" != "" ]; then sed -i s/"#9b62ff"/"${CSS_PRIMARY_DARK}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
 
 RUN if [ "$CSS_SECONDARY_DARK" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
@@ -92,7 +93,17 @@ RUN if [ "$CSS_TERTIARY_DARK" != "" ]; then sed -i s/"#7e50d0"/"${CSS_TERTIARY_D
 RUN if [ "$CSS_FOOTER_BACKGROUND" != "" ]; then sed -i s/"#3c226a"/"${CSS_FOOTER_BACKGROUND}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
 
 RUN if [ "$CSS_FOOTER_TEXT" != "" ]; then sed -i s/"#bda6e7"/"${CSS_FOOTER_TEXT}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_FOOTER_TEXT" != "" ]; then sed -i s/"#dcc8ff"/"${CSS_FOOTER_TEXT}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
 
+
+RUN mix phx.digest.clean --keep 0
+
+RUN cd apps/block_scout_web/assets/ && \
+    npm install && \
+    npm run deploy && \
+    cd -
+
+RUN mix phx.digest
 
 RUN rm /usr/local/bin/geth
 COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* /opt/app/.syscoin/
@@ -203,14 +214,14 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"ShowTxChart": "true",
 		"DisableExchangeRates": disableExchangeRates,
 		"ShowPriceChart": showPriceChart,
-		"CssPrimary": "#257db8",
+		"CssPrimary": "#243066",
 		"CssSecondary": "#87e1a9",
-		"CssTertiary": "#6fB8df",
-		"CssPrimaryDark": "#6fB8df",
+		"CssTertiary": "#344180",
+		"CssPrimaryDark": "#6fb8df",
 		"CssSecondaryDark": "#87e1a9",
-		"CssTertiaryDark": "#257db8",
-		"CssFooterBackground": "#101d49",
-		"CssFooterText": "#6fB8df",
+		"CssTertiaryDark": "#243066",
+		"CssFooterBackground": "#101d48",
+		"CssFooterText": "#6fb8df",
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
