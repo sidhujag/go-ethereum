@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -90,6 +91,9 @@ type LightEthereum struct {
 	udpEnabled bool
 	// SYSCOIN
 	zmqRep            *ZMQRep
+	timeLastBlock		int64
+	startNetwork		bool
+	lock              sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
 
 // New creates an instance of the light client.
@@ -245,11 +249,37 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 			} else {
 				log.Info("not building on tip, add to mapping...", "blocknumber", nevmBlockConnect.Block.NumberU64(), "currenthash", current.Hash().String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
 			}
-			// start networking sync once we start inserting chain meaning we are likely finished with IBD
 			if !leth.handler.inited {
-				log.Info("Networking and peering start...")
-				leth.handler.start()
-				leth.peers.open()
+				leth.lock.Lock()
+				leth.timeLastBlock = time.Now().Unix()
+				leth.lock.Unlock()
+			}
+			// start networking sync once we start inserting chain meaning we are likely finished with IBD
+			if !leth.startNetwork {
+				log.Info("Attempt to start networking/peering...")
+				go func(leth *LightEthereum) {
+					for {
+						time.Sleep(100)
+						leth.lock.Lock()
+						if leth.handler.inited && leth.peers.closed {
+							log.Info("Networking stopped, return without starting peering...")
+							leth.lock.Unlock()
+							return
+						}
+						// ensure 5 seconds has passed between blocks before we start peering so we are sure sync has finished
+						if time.Now().Unix() - leth.timeLastBlock >= 5 {
+							log.Info("Networking and peering start...")
+							leth.handler.start()
+							leth.peers.open()
+							leth.Downloader().Peers().Open()
+							leth.p2pServer.Start()
+							leth.lock.Unlock()
+							return
+						}
+						leth.lock.Unlock()
+					}
+				}(leth)
+				leth.startNetwork = true
 			}
 		} else {
 			log.Info("not building on tip, add to mapping...", "blockhash", nevmBlockConnect.Blockhash, "currenthash", currentHash.String(), "proposedparenthash", nevmBlockConnect.Parenthash.String())
