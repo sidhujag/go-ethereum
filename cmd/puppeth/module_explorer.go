@@ -172,6 +172,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	if host == "" {
 		host = client.server
 	}
+	svgFilePath := "apps/block_scout_web/assets/static/images/blockscout_logo_sys.svg"
 	template.Must(template.New("").Parse(explorerDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.node.network,
 		"Bootnodes": strings.Join(bootnodes, ","),
@@ -183,8 +184,8 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"SubNetwork": subNetwork,
 		"CoingeckoID":   "syscoin",
 		"Coin":   "SYS",
-		"Logo":   "/images/blockscout_logo_sys.svg",
-		"LogoFooter":   "/images/blockscout_logo_sys.svg",
+		"Logo":   svgFilePath,
+		"LogoFooter":   svgFilePath,
 		"LogoText":   "NEVM",
 		"HealthyBlockPeriod": 34500000,
 		"SupportedChains": supportedChains,
@@ -220,7 +221,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	})
 	files[filepath.Join(workdir, "docker-compose.yaml")] = composefile.Bytes()
 	files[filepath.Join(workdir, "genesis.json")] = config.node.genesis
-	files["/images/blockscout_logo_sys.svg"] = logoSVG
+	files[svgFilePath] = logoSVG
 	// Upload the deployment files to the remote server (and clean up afterwards)
 	if out, err := client.Upload(files); err != nil {
 		return out, err
