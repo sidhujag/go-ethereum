@@ -31,7 +31,13 @@ import (
 // explorerDockerfile is the Dockerfile required to run a block explorer.
 var explorerDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
-ARG COIN={{.Coin}}
+FROM sidhujag/blockscout:latest
+
+ENV SYSCOIN_DATA=/home/syscoin/.syscoin
+ENV SYSCOIN_VERSION=4.3.99
+ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
+ARG COINSYMBOL={{.Coin}}
+ARG COIN={{.Network}}
 ARG BLOCK_TRANSFORMER={{.BlockTransformer}}
 ARG CSS_PRIMARY={{.CssPrimary}}
 ARG CSS_SECONDARY={{.CssSecondary}}
@@ -41,11 +47,52 @@ ARG CSS_SECONDARY_DARK={{.CssSecondaryDark}}
 ARG CSS_TERTIARY_DARK={{.CssTertiaryDark}}
 ARG CSS_FOOTER_BACKGROUND={{.CssFooterBackground}}
 ARG CSS_FOOTER_TEXT={{.CssFooterText}}
-FROM sidhujag/blockscout:latest
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/lib/block_scout_web/templates/address/_balance_card.html.eex; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/lib/block_scout_web/templates/internal_transaction/_tile.html.eex; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/lib/block_scout_web/templates/layout/app.html.eex; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/lib/block_scout_web/templates/transaction/_pending_tile.html.eex; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/lib/block_scout_web/templates/transaction/overview.html.eex; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/lib/block_scout_web/views/wei_helpers.ex; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/priv/gettext/default.pot; fi
+RUN if [ "$COIN" != "" ]; then sed -i s/"Ether"/"${COIN}"/g apps/block_scout_web/priv/gettext/en/LC_MESSAGES/default.po; fi
 
-ENV SYSCOIN_DATA=/home/syscoin/.syscoin
-ENV SYSCOIN_VERSION=4.3.99
-ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
+RUN if [ "$COINSYMBOL" != "" ]; then sed -i s/"ETH"/"${COINSYMBOL}"/g apps/block_scout_web/priv/gettext/default.pot; fi
+RUN if [ "$COINSYMBOL" != "" ]; then sed -i s/"ETH"/"${COINSYMBOL}"/g apps/block_scout_web/priv/gettext/en/LC_MESSAGES/default.po; fi
+
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/lib/block_scout_web/templates/address/_tabs.html.eex; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/lib/block_scout_web/templates/address_validation/index.html.eex; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/lib/block_scout_web/views/address_view.ex; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/lib/block_scout_web/templates/layout/_topnav.html.eex; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/lib/block_scout_web/templates/transaction/index.html.eex; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/assets/js/pages/address.js; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/priv/gettext/en/LC_MESSAGES/default.po; fi
+RUN if [ "$BLOCK_TRANSFORMER" == "base" ]; then sed -i s/"Validated"/"Mined"/g apps/block_scout_web/priv/gettext/default.pot; fi
+
+RUN if [ "$CSS_PRIMARY" != "" ]; then sed -i s/"#5c34a2"/"${CSS_PRIMARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_PRIMARY" != "" ]; then sed -i s/"#5c34a2"/"${CSS_PRIMARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables-non-critical.scss; fi
+RUN if [ "$CSS_PRIMARY" != "" ]; then sed -i s/"#5b389f"/"${CSS_PRIMARY}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
+
+RUN if [ "$CSS_SECONDARY" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_SECONDARY" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables-non-critical.scss; fi
+RUN if [ "$CSS_SECONDARY" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
+
+RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#bf9cff"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#bf9cff"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_neutral_variables-non-critical.scss; fi
+RUN if [ "$CSS_TERTIARY" != "" ]; then sed -i s/"#997fdc"/"${CSS_TERTIARY}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
+
+RUN if [ "$CSS_PRIMARY_DARK" != "" ]; then sed -i s/"#9b62ff"/"${CSS_PRIMARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_PRIMARY_DARK" != "" ]; then sed -i s/"#9b62ff"/"${CSS_PRIMARY_DARK}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
+
+RUN if [ "$CSS_SECONDARY_DARK" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+RUN if [ "$CSS_SECONDARY_DARK" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables-non-critical.scss; fi
+RUN if [ "$CSS_SECONDARY_DARK" != "" ]; then sed -i s/"#87e1a9"/"${CSS_SECONDARY_DARK}"/g apps/block_scout_web/assets/css/theme/_base_variables.scss; fi
+
+RUN if [ "$CSS_TERTIARY_DARK" != "" ]; then sed -i s/"#7e50d0"/"${CSS_TERTIARY_DARK}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+
+RUN if [ "$CSS_FOOTER_BACKGROUND" != "" ]; then sed -i s/"#3c226a"/"${CSS_FOOTER_BACKGROUND}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+
+RUN if [ "$CSS_FOOTER_TEXT" != "" ]; then sed -i s/"#bda6e7"/"${CSS_FOOTER_TEXT}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+
 
 RUN rm /usr/local/bin/geth
 COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* /opt/app/.syscoin/
@@ -72,8 +119,8 @@ RUN \
     echo 'sleep 5' >> explorer.sh && \
     echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
     echo 'mix phx.server &' >> explorer.sh && \
-    echo $'LC_ALL=C syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --datadir=/opt/app/.syscoin --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug,network,txpool" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --gethcommandline=--exitwhensynced' >> explorer.sh && \
-    echo $'LC_ALL=C exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --datadir=/opt/app/.syscoin --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,shh,debug,network,txpool" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh
+    echo $'LC_ALL=C syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --datadir=/opt/app/.syscoin --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,debug,txpool" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --gethcommandline=--exitwhensynced' >> explorer.sh && \
+    echo $'LC_ALL=C exec syscoind {{if eq .NetworkID 58}}--testnet{{end}} --addnode=3.15.199.152 --datadir=/opt/app/.syscoin --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,debug,txpool" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" &' >> explorer.sh
 
 ENTRYPOINT ["/bin/sh", "explorer.sh"]
 `
