@@ -103,6 +103,10 @@ RUN cd apps/block_scout_web/assets/ && \
     npm run deploy && \
     cd -
 
+RUN cd apps/explorer/ && \
+    npm install && \
+    cd -
+
 RUN mix phx.digest
 
 RUN rm /usr/local/bin/geth
