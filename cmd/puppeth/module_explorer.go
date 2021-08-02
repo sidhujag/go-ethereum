@@ -187,7 +187,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	subNetwork := ""
 	showPriceChart := "true"
 	disableExchangeRates := "false"
-	supportedChains := `[{"title":"Tanenbaum Testnet","url":"https://blockscout.com/rsk/mainnet","test_net?":true},{"title":"Syscoin Mainnet","url":"https://blockscout.com/rsk/mainnet"}]`
+	supportedChains := "[ { \"title\": \"Tanenbaum Testnet\", \"url\": \"https://blockscout.com/rsk/mainnet\", \"test_net?\": true }, { \"title\": \"Syscoin Mainnet\", \"url\": \"https://blockscout.com/rsk/mainnet\" } ]"
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
 		disableExchangeRates = "false"
