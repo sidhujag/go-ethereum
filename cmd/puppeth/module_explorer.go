@@ -121,14 +121,13 @@ ENV NETWORK={{.Network}} \
     LOGO_TEXT={{.LogoText}} \
     CHAIN_ID={{.NetworkID}} \
     HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
-    SUPPORTED_CHAINS={{.SupportedChains}} \
+    SUPPORTED_CHAINS='[{"title":"Tanenbaum Testnet","url":"https://blockscout.com/rsk/mainnet","test_net?":true},{"title":"Syscoin Mainnet","url":"https://blockscout.com/rsk/mainnet"}]' \
     BLOCK_TRANSFORMER={{.BlockTransformer}} \
     SHOW_TXS_CHART={{.ShowTxChart}} \
     DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
     SHOW_PRICE_CHART={{.ShowPriceChart}} \
     ETHEREUM_JSONRPC_HTTP_URL={{.HttpUrl}} \
-    ETHEREUM_JSONRPC_WS_URL={{.WsUrl}} \
-    GAS_PRICE=0
+    ETHEREUM_JSONRPC_WS_URL={{.WsUrl}}
 
 RUN \
 	echo $'LC_ALL=C syscoind {{if eq .NetworkID 58}}--testnet --addnode=3.15.199.152{{end}} --datadir=/opt/app/.syscoin --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,debug,txpool" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --gethcommandline=--exitwhensynced' >> explorer.sh && \
@@ -136,7 +135,7 @@ RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
     echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
-    echo 'mix phx.server' >> explorer.sh
+	echo 'mix phx.server' >> explorer.sh
 
 ENTRYPOINT ["/bin/sh", "explorer.sh"]
 `
@@ -188,7 +187,6 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	subNetwork := ""
 	showPriceChart := "true"
 	disableExchangeRates := "false"
-	supportedChains := `[{"title":"Tanenbaum Testnet","url":"https://blockscout.com/rsk/mainnet","test_net?":true},{"title":"Syscoin Mainnet","url":"https://blockscout.com/rsk/mainnet"}]`
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
 		disableExchangeRates = "false"
@@ -213,7 +211,6 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"LogoFooter":   "/images/sys_logo.svg",
 		"LogoText":   "NEVM",
 		"HealthyBlockPeriod": 34500000,
-		"SupportedChains": supportedChains,
 		"BlockTransformer": transformer,
 		"ShowTxChart": "true",
 		"DisableExchangeRates": disableExchangeRates,
