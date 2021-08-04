@@ -135,7 +135,7 @@ RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
     echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
-	echo 'mix phx.server' >> explorer.sh
+    echo 'mix phx.server' >> explorer.sh
 
 ENTRYPOINT ["/bin/sh", "explorer.sh"]
 `
