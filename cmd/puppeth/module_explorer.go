@@ -127,7 +127,8 @@ ENV NETWORK={{.Network}} \
     DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
     SHOW_PRICE_CHART={{.ShowPriceChart}} \
     ETHEREUM_JSONRPC_HTTP_URL={{.HttpUrl}} \
-    ETHEREUM_JSONRPC_WS_URL={{.WsUrl}}
+    ETHEREUM_JSONRPC_WS_URL={{.WsUrl}} \
+    GAS_PRICE=0
 
 RUN \
 	echo $'LC_ALL=C syscoind {{if eq .NetworkID 58}}--testnet --addnode=3.15.199.152{{end}} --datadir=/opt/app/.syscoin --disablewallet --zmqpubnevm="tcp://127.0.0.1:1111" --gethcommandline=--syncmode="full" --gethcommandline=--gcmode="archive" --gethcommandline=--port={{.EthPort}} --gethcommandline=--bootnodes={{.Bootnodes}} --gethcommandline=--ethstats={{.Ethstats}} --gethcommandline=--cache=512 --gethcommandline=--http --gethcommandline=--http.api="net,web3,eth,debug,txpool" --gethcommandline=--http.corsdomain="*" --gethcommandline=--http.vhosts="*" --gethcommandline=--ws --gethcommandline=--ws.origins="*" --gethcommandline=--exitwhensynced' >> explorer.sh && \
@@ -135,7 +136,7 @@ RUN \
     echo '/usr/local/bin/docker-entrypoint.sh postgres &' >> explorer.sh && \
     echo 'sleep 5' >> explorer.sh && \
     echo 'mix do ecto.drop --force, ecto.create, ecto.migrate' >> explorer.sh && \
-	echo 'mix phx.server' >> explorer.sh
+    echo 'mix phx.server' >> explorer.sh
 
 ENTRYPOINT ["/bin/sh", "explorer.sh"]
 `
