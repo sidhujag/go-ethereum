@@ -19,7 +19,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"text/template"
 	"math/rand"
 	"path/filepath"
 	"strconv"
@@ -121,7 +121,7 @@ ENV NETWORK={{.Network}} \
     LOGO_TEXT={{.LogoText}} \
     CHAIN_ID={{.NetworkID}} \
     HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
-    SUPPORTED_CHAINS='[{"title":"Tanenbaum Testnet","url":"https://blockscout.com/rsk/mainnet","test_net?":true},{"title":"Syscoin Mainnet","url":"https://blockscout.com/rsk/mainnet"}]' \
+    SUPPORTED_CHAINS='{{.SupportedChains}}' \
     BLOCK_TRANSFORMER={{.BlockTransformer}} \
     SHOW_TXS_CHART={{.ShowTxChart}} \
     DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
@@ -188,6 +188,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	subNetwork := ""
 	showPriceChart := "true"
 	disableExchangeRates := "false"
+	supportedChains := `[{"title":"Tanenbaum Testnet","url":"https://blockscout.com/rsk/mainnet","test_net?":true},{"title":"Syscoin Mainnet","url":"https://blockscout.com/rsk/mainnet"}]`
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
 		disableExchangeRates = "false"
@@ -212,6 +213,7 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"LogoFooter":   "/images/sys_logo.svg",
 		"LogoText":   "NEVM",
 		"HealthyBlockPeriod": 34500000,
+		"SupportedChains": supportedChains,
 		"BlockTransformer": transformer,
 		"ShowTxChart": "true",
 		"DisableExchangeRates": disableExchangeRates,
