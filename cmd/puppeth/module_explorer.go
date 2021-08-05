@@ -19,7 +19,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"text/template"
 	"math/rand"
 	"path/filepath"
 	"strconv"
@@ -121,7 +121,7 @@ ENV NETWORK={{.Network}} \
     LOGO_TEXT={{.LogoText}} \
     CHAIN_ID={{.NetworkID}} \
     HEALTHY_BLOCKS_PERIOD={{.HealthyBlockPeriod}} \
-    SUPPORTED_CHAINS={{.SupportedChains}} \
+    SUPPORTED_CHAINS='{{.SupportedChains}}' \
     BLOCK_TRANSFORMER={{.BlockTransformer}} \
     SHOW_TXS_CHART={{.ShowTxChart}} \
     DISABLE_EXCHANGE_RATES={{.DisableExchangeRates}} \
