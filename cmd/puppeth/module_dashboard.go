@@ -466,11 +466,11 @@ WORKDIR /usr/app
 RUN \
 	npm install connect serve-static && \
 	\
-	echo 'var connect = require("connect");'                                > /usr/app/server.js && \
-	echo 'var serveStatic = require("serve-static");'                      >> /usr/app/server.js && \
-	echo 'connect().use(serveStatic("/dashboard")).listen(80, function(){' >> /usr/app/server.js && \
-	echo '    console.log("Server running on 80...");'                     >> /usr/app/server.js && \
-	echo '});'                                                             >> /usr/app/server.js
+	echo 'var connect = require("connect");'                                > server.js && \
+	echo 'var serveStatic = require("serve-static");'                      >> server.js && \
+	echo 'connect().use(serveStatic("/dashboard")).listen(80, function(){' >> server.js && \
+	echo '    console.log("Server running on 80...");'                     >> server.js && \
+	echo '});'                                                             >> server.js
 
 ADD {{.Network}}.json /dashboard/{{.Network}}.json
 ADD {{.Network}}-cpp.json /dashboard/{{.Network}}-cpp.json
