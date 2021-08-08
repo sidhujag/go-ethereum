@@ -43,7 +43,7 @@ ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 COPY --from=syscoin-alpine ${SYSCOIN_DATA}/* ${SYSCOIN_DATA}/
 COPY --from=syscoin-alpine ${SYSCOIN_PREFIX}/bin/* /usr/local/bin/
 RUN rm ${SYSCOIN_DATA}/sysgeth
-COPY ${SYSCOIN_DATA}/faucet ${SYSCOIN_DATA}/sysgeth
+COPY --from=syscoin-alpine ${SYSCOIN_DATA}/faucet ${SYSCOIN_DATA}/sysgeth
 
 ADD genesis.json /genesis.json
 ADD account.json /account.json
