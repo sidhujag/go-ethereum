@@ -120,7 +120,6 @@ type handler struct {
 	whitelist map[uint64]common.Hash
 
 	// channels for fetcher, syncer, txsyncLoop
-	txsyncCh chan *txsync
 	quitSync chan struct{}
 
 	chainSync *chainSyncer
@@ -145,7 +144,6 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		chain:      config.Chain,
 		peers:      newPeerSet(),
 		whitelist:  config.Whitelist,
-		txsyncCh:   make(chan *txsync),
 		quitSync:   make(chan struct{}),
 	}
 	if config.Sync == downloader.FullSync {
@@ -415,10 +413,9 @@ func (h *handler) Start(maxPeers int) {
 	go h.minedBroadcastLoop()
 
 	// start sync handlers
-	h.wg.Add(2)
+	h.wg.Add(1)
 	go h.chainSync.loop()
-	go h.txsyncLoop64() // TODO(karalabe): Legacy initial tx echange, drop with eth/64.
-	// SYSCOIN
+  // SYSCOIN
 	h.inited = true
 }
 

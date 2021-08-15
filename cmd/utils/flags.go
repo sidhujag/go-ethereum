@@ -452,11 +452,6 @@ var (
 		Name:  "miner.notify.full",
 		Usage: "Notify with pending block headers instead of work packages",
 	}
-	MinerGasTargetFlag = cli.Uint64Flag{
-		Name:  "miner.gastarget",
-		Usage: "Target gas floor for mined blocks",
-		Value: ethconfig.Defaults.Miner.GasFloor,
-	}
 	MinerGasLimitFlag = cli.Uint64Flag{
 		Name:  "miner.gaslimit",
 		Usage: "Target gas ceiling for mined blocks",
@@ -772,16 +767,6 @@ var (
 		Name:  "metrics.influxdb.tags",
 		Usage: "Comma-separated InfluxDB tags (key/values) attached to all measurements",
 		Value: metrics.DefaultConfig.InfluxDBTags,
-	}
-	EWASMInterpreterFlag = cli.StringFlag{
-		Name:  "vm.ewasm",
-		Usage: "External ewasm configuration (default = built-in interpreter)",
-		Value: "",
-	}
-	EVMInterpreterFlag = cli.StringFlag{
-		Name:  "vm.evm",
-		Usage: "External EVM configuration (default = built-in interpreter)",
-		Value: "",
 	}
 
 	CatalystFlag = cli.BoolFlag{
@@ -1329,8 +1314,7 @@ func setGPO(ctx *cli.Context, cfg *gasprice.Config, light bool) {
 	// If we are running the light client, apply another group
 	// settings for gas oracle.
 	if light {
-		cfg.Blocks = ethconfig.LightClientGPO.Blocks
-		cfg.Percentile = ethconfig.LightClientGPO.Percentile
+		*cfg = ethconfig.LightClientGPO
 	}
 	if ctx.GlobalIsSet(GpoBlocksFlag.Name) {
 		cfg.Blocks = ctx.GlobalInt(GpoBlocksFlag.Name)
@@ -1424,9 +1408,6 @@ func setMiner(ctx *cli.Context, cfg *miner.Config) {
 	if ctx.GlobalIsSet(MinerExtraDataFlag.Name) {
 		cfg.ExtraData = []byte(ctx.GlobalString(MinerExtraDataFlag.Name))
 	}
-	if ctx.GlobalIsSet(MinerGasTargetFlag.Name) {
-		cfg.GasFloor = ctx.GlobalUint64(MinerGasTargetFlag.Name)
-	}
 	if ctx.GlobalIsSet(MinerGasLimitFlag.Name) {
 		cfg.GasCeil = ctx.GlobalUint64(MinerGasLimitFlag.Name)
 	}
@@ -1438,6 +1419,9 @@ func setMiner(ctx *cli.Context, cfg *miner.Config) {
 	}
 	if ctx.GlobalIsSet(MinerNoVerfiyFlag.Name) {
 		cfg.Noverify = ctx.GlobalBool(MinerNoVerfiyFlag.Name)
+	}
+	if ctx.GlobalIsSet(LegacyMinerGasTargetFlag.Name) {
+		log.Warn("The generic --miner.gastarget flag is deprecated and will be removed in the future!")
 	}
 }
 
@@ -1618,13 +1602,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		cfg.EnablePreimageRecording = ctx.GlobalBool(VMEnableDebugFlag.Name)
 	}
 
-	if ctx.GlobalIsSet(EWASMInterpreterFlag.Name) {
-		cfg.EWASMInterpreter = ctx.GlobalString(EWASMInterpreterFlag.Name)
-	}
-
-	if ctx.GlobalIsSet(EVMInterpreterFlag.Name) {
-		cfg.EVMInterpreter = ctx.GlobalString(EVMInterpreterFlag.Name)
-	}
 	if ctx.GlobalIsSet(RPCGlobalGasCapFlag.Name) {
 		cfg.RPCGasCap = ctx.GlobalUint64(RPCGlobalGasCapFlag.Name)
 	}
