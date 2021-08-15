@@ -269,6 +269,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 						// ensure 5 seconds has passed between blocks before we start peering so we are sure sync has finished
 						if time.Now().Unix() - leth.timeLastBlock >= 5 {
 							log.Info("Networking and peering start...")
+							leth.udpEnabled = true
 							leth.handler.start()
 							leth.peers.open()
 							leth.Downloader().Peers().Open()
@@ -489,6 +490,10 @@ func (s *LightEthereum) Start() error {
 		s.handler.start()
 	} else {
 		log.Info("Skip networking start...")
+		s.udpEnabled = false
+		s.handler.stop()
+		s.Downloader().Peers().Close()
+		s.p2pServer.Stop()
 		s.peers.close()
 	}
 

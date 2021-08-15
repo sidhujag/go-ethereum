@@ -641,6 +641,10 @@ func (s *Ethereum) StartMining(threads int) error {
 			go s.miner.Start(eb)
 		} else {
 			log.Info("Skip networking start...")
+			s.handler.Stop()
+			s.handler.peers.close()
+			s.Downloader().Peers().Close()
+			s.p2pServer.Stop()
 			s.miner.DisablePreseal()
 		}
 	}
