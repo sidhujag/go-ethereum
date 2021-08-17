@@ -35,6 +35,7 @@ var nodeDockerfile = `
 FROM sidhujag/syscoin-core:latest as syscoin-alpine
 FROM alpine:3.14
 
+ADD genesis.json /genesis.json
 {{if .Unlock}}
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
@@ -245,7 +246,14 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 
 	// Container available, retrieve its node ID and its genesis json
 	var out []byte
-	if out, err = client.Run(fmt.Sprintf("docker exec %s_%s_1 /home/syscoin/.syscoin/sysgeth --exec admin.nodeInfo.enode --cache=16 attach", network, kind)); err != nil {
+
+	// The ipc file is not in the standard location, so we need find it, and specify it.
+	if out, err = client.Run(fmt.Sprintf("docker exec %s_%s_1 find /home/syscoin/.syscoin -name geth.ipc", network, kind)); err != nil {
+		return nil, ErrServiceUnreachable
+	}
+	ipcLocation := string(bytes.TrimSpace(out))
+
+	if out, err = client.Run(fmt.Sprintf("docker exec %s_%s_1 /home/syscoin/.syscoin/sysgeth --exec admin.nodeInfo.enode --cache=16 attach "+ipcLocation, network, kind)); err != nil {
 		return nil, ErrServiceUnreachable
 	}
 	enode := bytes.Trim(bytes.TrimSpace(out), "\"")
