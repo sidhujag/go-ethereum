@@ -49,6 +49,7 @@ ARG CSS_FOOTER_BACKGROUND={{.CssFooterBackground}}
 ARG CSS_FOOTER_TEXT={{.CssFooterText}}
 RUN if [ "$COINNETWORK" != "" ]; then sed -i s/"Ether"/"${COINNETWORK}"/g apps/block_scout_web/lib/block_scout_web/templates/address/_balance_card.html.eex; fi
 RUN if [ "$COINNETWORK" != "" ]; then sed -i s/"Ether"/"${COINNETWORK}"/g apps/block_scout_web/lib/block_scout_web/templates/internal_transaction/_tile.html.eex; fi
+RUN if [ "$COINNETWORK" != "" ]; then sed -i s/"Ether"/"${COINNETWORK}"/g apps/block_scout_web/lib/block_scout_web/templates/transaction/_tile.html.eex; fi
 RUN if [ "$COINNETWORK" != "" ]; then sed -i s/"Ether"/"${COINNETWORK}"/g apps/block_scout_web/lib/block_scout_web/templates/layout/app.html.eex; fi
 RUN if [ "$COINNETWORK" != "" ]; then sed -i s/"Ether"/"${COINNETWORK}"/g apps/block_scout_web/lib/block_scout_web/templates/transaction/_pending_tile.html.eex; fi
 RUN if [ "$COINNETWORK" != "" ]; then sed -i s/"Ether"/"${COINNETWORK}"/g apps/block_scout_web/lib/block_scout_web/templates/transaction/overview.html.eex; fi
