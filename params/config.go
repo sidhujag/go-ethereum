@@ -31,7 +31,6 @@ var (
 	RopstenGenesisHash   = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d")
 	RinkebyGenesisHash   = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 	GoerliGenesisHash    = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
-	CalaverasGenesisHash = common.HexToHash("0xeb9233d066c275efcdfed8037f4fc082770176aefdbcb7691c71da412a5670f2")
 	SyscoinGenesisHash   = common.HexToHash("0x06213eb0669345b6b106bb19d9e2e198a8c06eae3a50e0f303a046ca6afd277f")
 	TanenbaumGenesisHash = common.HexToHash("0x566d9454e219db7531bbfe882500cb12923ea22f5766917336a1cc81fc5b543d")
 )
@@ -306,27 +305,6 @@ var (
 			common.HexToAddress("0x0DF8fa387C602AE62559cC4aFa4972A7045d6707"), // Guillaume
 		},
 		Threshold: 2,
-	}
-
-	CalaverasChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(123),
-		HomesteadBlock:      big.NewInt(0),
-		DAOForkBlock:        nil,
-		DAOForkSupport:      true,
-		EIP150Block:         big.NewInt(0),
-		EIP155Block:         big.NewInt(0),
-		EIP158Block:         big.NewInt(0),
-		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(0),
-		PetersburgBlock:     big.NewInt(0),
-		IstanbulBlock:       big.NewInt(0),
-		MuirGlacierBlock:    nil,
-		BerlinBlock:         big.NewInt(0),
-		LondonBlock:         big.NewInt(500),
-		Clique: &CliqueConfig{
-			Period: 30,
-			Epoch:  30000,
-		},
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced

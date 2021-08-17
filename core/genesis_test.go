@@ -185,10 +185,6 @@ func TestGenesisHashes(t *testing.T) {
 			genesis: DefaultRinkebyGenesisBlock(),
 			hash:    params.RinkebyGenesisHash,
 		},
-		{
-			genesis: DefaultCalaverasGenesisBlock(),
-			hash:    params.CalaverasGenesisHash,
-		},
 		// SYSCOIN
 		{
 			genesis: DefaultSyscoinGenesisBlock(),
