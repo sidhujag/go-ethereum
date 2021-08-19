@@ -208,9 +208,9 @@ bootnodes.append(new Enode("{{.}}"));{{end}}
 
 NodeConfig config = new NodeConfig();
 config.setBootstrapNodes(bootnodes);
-config.setNEVMNetworkID({{.NetworkID}});
-config.setNEVMGenesis(genesis);{{if .Ethstats}}
-config.setNEVMNetStats("{{.Ethstats}}");{{end}}
+config.setEthereumNetworkID({{.NetworkID}});
+config.setEthereumGenesis(genesis);{{if .Ethstats}}
+config.setEthereumNetStats("{{.Ethstats}}");{{end}}
 
 Node node = new Node(getFilesDir() + "/.{{.Network}}", config);
 node.start();
@@ -241,9 +241,9 @@ bootnodes?.append(GethNewEnode("{{.}}", &error)){{end}}
 
 let config = GethNewNodeConfig()
 config?.setBootstrapNodes(bootnodes)
-config?.setNEVMNetworkID({{.NetworkID}})
-config?.setNEVMGenesis(genesis){{if .Ethstats}}
-config?.setNEVMNetStats("{{.Ethstats}}"){{end}}
+config?.setEthereumNetworkID({{.NetworkID}})
+config?.setEthereumGenesis(genesis){{if .Ethstats}}
+config?.setEthereumNetStats("{{.Ethstats}}"){{end}}
 
 let datadir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
 let node = GethNewNode(datadir + "/.{{.Network}}", config, &error);
