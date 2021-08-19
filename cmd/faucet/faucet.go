@@ -184,7 +184,7 @@ func main() {
 		log.Crit("Failed to unlock faucet signer account", "err", err)
 	}
 	// SYSCOIN Assemble and start the faucet light service
-	faucet, err := newFaucet(genesis, *ethPortFlag, enodes, *netFlag, *statsFlag, *NEVMPubFlag, ks, website.Bytes())
+	faucet, err := newFaucet(genesis, *ethPortFlag, enodes, *netFlag, *statsFlag, *NEVMPubFlag, *dataDirFlag, ks, website.Bytes())
 	if err != nil {
 		log.Crit("Failed to start faucet", "err", err)
 	}
@@ -232,12 +232,17 @@ type wsConn struct {
 	wlock sync.Mutex
 }
 
-func newFaucet(genesis *core.Genesis, port int, enodes []*enode.Node, network uint64, stats string, NEVMPub string, ks *keystore.KeyStore, index []byte) (*faucet, error) {
+func newFaucet(genesis *core.Genesis, port int, enodes []*enode.Node, network uint64, stats string, NEVMPub string, dataDir string, ks *keystore.KeyStore, index []byte) (*faucet, error) {
 	// Assemble the raw devp2p protocol stack
+	// SYSCOIN override datadir if applicable
+	dataDirToUse := filepath.Join(os.Getenv("HOME"), ".faucet")
+	if dataDir != "" {
+		dataDirToUse = dataDir
+	}
 	stack, err := node.New(&node.Config{
 		Name:    "geth",
 		Version: params.VersionWithCommit(gitCommit, gitDate),
-		DataDir: filepath.Join(os.Getenv("HOME"), ".faucet"),
+		DataDir: dataDirToUse,
 		P2P: p2p.Config{
 			NAT:              nat.Any(),
 			NoDiscovery:      true,
