@@ -113,7 +113,7 @@ var dashboardContent = `
 										<p>Initial processing required to execute all transactions may require non-negligible time and disk capacity required to store all past state may be non-insignificant. High end machines with SSD storage, modern CPUs and 8GB+ RAM are recommended.</p>
 										<br/>
 										<p>To run an archive node, download and start Syscoin with:
-											<pre>syscoind  {{if eq .NetworkID 58}}--testnet{{end} --zmqpubnevm=tcp://127.0.0.1:1111 --datadir=$HOME/.{{.Network}} --gethcommandline=--cache=1024 --gethcommandline=--syncmode=full{{if .Ethstats}} --gethcommandline=--ethstats='{{.Ethstats}}'{{end}} --gethcommandline=--bootnodes={{.BootnodesFlat}}</pre>
+											<pre>syscoind {{if eq .NetworkID 58}}--testnet{{end}} --zmqpubnevm=tcp://127.0.0.1:1111 --datadir=$HOME/.{{.Network}} --gethcommandline=--cache=1024 --gethcommandline=--syncmode=full{{if .Ethstats}} --gethcommandline=--ethstats='{{.Ethstats}}'{{end}} --gethcommandline=--bootnodes={{.BootnodesFlat}}</pre>
 										</p>
 										<br/>
 										<p>You can download Syscoin/NEVM from <a href="https://syscoincore.org/en/download/" target="about:blank">https://syscoincore.org/en/download/</a>.</p>
