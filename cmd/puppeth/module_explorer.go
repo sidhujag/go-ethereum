@@ -129,6 +129,8 @@ ENV NETWORK={{.Network}} \
     SHOW_PRICE_CHART={{.ShowPriceChart}} \
     ETHEREUM_JSONRPC_HTTP_URL={{.HttpUrl}} \
     ETHEREUM_JSONRPC_WS_URL={{.WsUrl}} \
+    BLOCKSCOUT_PROTOCOL={{.BlockscoutProtocol}} \
+    BLOCKSCOUT_HOST={{.BlockscoutHost}} \
     GAS_PRICE=0
 
 RUN \
@@ -189,15 +191,17 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 	subNetwork := ""
 	showPriceChart := "true"
 	disableExchangeRates := "false"
-	supportedChains := `[{"title":"Tanenbaum Testnet","url":"https://blockscout.com/rsk/mainnet","test_net?":true},{"title":"Syscoin Mainnet","url":"https://blockscout.com/rsk/mainnet"}]`
+	supportedChains := `[{"title":"Tanenbaum Testnet","url":"https://tanenbaum.io","test_net?":true},{"title":"Syscoin Mainnet","url":"https://nevm.syscoin.org"}]`
 	if config.node.network == 58 {
 		subNetwork = "Tanenbaum"
 		disableExchangeRates = "false"
 		showPriceChart = "true"
 	}
+	protocol := "https"
 	host := config.host
 	if host == "" {
 		host = client.server
+		protocol = "http"
 	}
 	template.Must(template.New("").Parse(explorerDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.node.network,
@@ -216,6 +220,8 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"HealthyBlockPeriod": 34500000,
 		"SupportedChains": supportedChains,
 		"BlockTransformer": transformer,
+		"BlockscoutProtocol": protocol,
+		"BlockscoutHost": host,
 		"ShowTxChart": "true",
 		"DisableExchangeRates": disableExchangeRates,
 		"ShowPriceChart": showPriceChart,
