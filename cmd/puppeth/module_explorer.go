@@ -37,6 +37,7 @@ ENV SYSCOIN_DATA=/home/syscoin/.syscoin
 ENV SYSCOIN_VERSION=4.3.99
 ENV SYSCOIN_PREFIX=/opt/syscoin-${SYSCOIN_VERSION}
 ARG COINSYMBOL={{.Coin}}
+ARG COINGECKO_COIN_ID={{.CoingeckoID}}
 ARG COINNETWORK={{.Network}}
 ARG BLOCK_TRANSFORMER={{.BlockTransformer}}
 ARG CSS_PRIMARY={{.CssPrimary}}
@@ -95,6 +96,8 @@ RUN if [ "$CSS_FOOTER_BACKGROUND" != "" ]; then sed -i s/"#3c226a"/"${CSS_FOOTER
 
 RUN if [ "$CSS_FOOTER_TEXT" != "" ]; then sed -i s/"#bda6e7"/"${CSS_FOOTER_TEXT}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
 RUN if [ "$CSS_FOOTER_TEXT" != "" ]; then sed -i s/"#dcc8ff"/"${CSS_FOOTER_TEXT}"/g apps/block_scout_web/assets/css/theme/_neutral_variables.scss; fi
+
+sed -i s/"ethereum"/"${COINGECKO_COIN_ID}"/g apps/explorer/lib/explorer/exchange_rates/source/coin_gecko.ex; fi
 
 
 RUN mix phx.digest.clean --keep 0
