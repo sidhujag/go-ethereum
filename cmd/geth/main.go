@@ -124,7 +124,7 @@ var (
 		utils.MinerEtherbaseFlag,
 		utils.MinerExtraDataFlag,
 		utils.MinerRecommitIntervalFlag,
-		utils.MinerNoVerfiyFlag,
+		utils.MinerNoVerifyFlag,
 		// SYSCOIN
 		utils.NEVMPubFlag,
 		utils.NATFlag,
