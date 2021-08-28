@@ -266,7 +266,7 @@ try! node?.start();
 										<p>Puppeth is a deployment tool for the NEVM network to launch bootnodes, ethstats server, crypto faucet, block explorer, dashboard and more; without the hassle that it would normally entail to manually configure all these services one by one.</p>
 										<p>Puppeth uses ssh to dial in to remote servers, and builds its network components out of docker containers using docker-compose. The user is guided through the process via a command line wizard that does the heavy lifting and topology configuration automatically behind the scenes.</p>
 										<br/>
-										<p>Puppeth can be installed via:<pre>go get github.com/sidhujag/go-ethereum/cmd/puppeth</pre></p>
+										<p>Puppeth can be installed via:<pre>go get github.com/syscoin/go-ethereum/cmd/puppeth</pre></p>
 										<br/>
 										<p><em>Copyright 2021. The go-ethereum/Syscoin Authors.</em></p>
 									</div>
