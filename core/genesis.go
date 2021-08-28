@@ -401,7 +401,6 @@ func DefaultGoerliGenesisBlock() *Genesis {
 	}
 }
 
-
 // SYSCOIN
 func DefaultSyscoinGenesisBlock() *Genesis {
 	// Full genesis: https://gist.github.com/holiman/c6ed9269dce28304ad176314caa75e97
