@@ -211,8 +211,10 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		return clique.New(chainConfig.Clique, db)
 	}
 	// SYSCOIN
-	if chainConfig.ChainID.Uint64() == params.SyscoinChainConfig.ChainID.Uint64() || chainConfig.ChainID.Uint64() == params.TanenbaumChainConfig.ChainID.Uint64() {
-		config.PowMode = ethash.ModeNEVM
+	if chainConfig.ChainID != nil && ((params.SyscoinChainConfig != nil && params.SyscoinChainConfig.ChainID != nil) || (params.TanenbaumChainConfig != nil && params.TanenbaumChainConfig.ChainID != nil)) {
+		if chainConfig.ChainID.Uint64() == params.SyscoinChainConfig.ChainID.Uint64() || chainConfig.ChainID.Uint64() == params.TanenbaumChainConfig.ChainID.Uint64() {
+			config.PowMode = ethash.ModeNEVM
+		}
 	}
 	// Otherwise assume proof-of-work
 	switch config.PowMode {
