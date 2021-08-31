@@ -406,22 +406,22 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		currentParentHash := current.ParentHash()
 		currentHash := current.Hash()
 		currentNEVMMappingHash := eth.blockchain.GetLatestNEVMMappingHash()
-		// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
-		// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
-		// it is assumed disconnect will always be called on the tip and if it isn't it should reject
-		if nevmBlockhash != currentHash {
-			return errors.New("deleteBlock: requested block does not match current tip")
-		}
-		if currentNEVMMappingHash != currentHash {
-			return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
-		}
-		parent := eth.blockchain.GetBlock(currentParentHash, current.NumberU64()-1)
-		if parent == nil {
-			return errors.New("deleteBlock: NEVM tip parent block not found")
-		}
-		err := eth.blockchain.WriteKnownBlock(parent)
-		if err != nil {
-			return err
+		// if the chain is synced then the head can be removed
+		if nevmBlockhash == currentHash {
+			// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
+			// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
+			// it is assumed disconnect will always be called on the tip and if it isn't it should reject
+			if currentNEVMMappingHash != currentHash {
+				return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
+			}
+			parent := eth.blockchain.GetBlock(currentParentHash, current.NumberU64()-1)
+			if parent == nil {
+				return errors.New("deleteBlock: NEVM tip parent block not found")
+			}
+			err := eth.blockchain.WriteKnownBlock(parent)
+			if err != nil {
+				return err
+			}
 		}
 		eth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, currentParentHash, current.NumberU64())
 		return nil

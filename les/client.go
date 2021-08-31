@@ -300,18 +300,18 @@ func New(stack *node.Node, config *ethconfig.Config) (*LightEthereum, error) {
 		current := leth.blockchain.CurrentHeader()
 		currentHash := current.Hash()
 		currentNEVMMappingHash := leth.blockchain.GetLatestNEVMMappingHash()
-		// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
-		// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
-		// it is assumed disconnect will always be called on the tip and if it isn't it should reject
-		if nevmBlockhash != currentHash {
-			return errors.New("deleteBlock: requested block does not match current tip")
-		}
-		if currentNEVMMappingHash != currentHash {
-			return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
-		}
-		err := leth.blockchain.SetHead(current.Number.Uint64() - 1)
-		if err != nil {
-			return err
+		// if the chain is synced then the head can be removed
+		if nevmBlockhash == currentHash  {
+			// the SYS block has NEVM blockhash stored in its coinbase transaction which is extracted and passed to this function
+			// that will relate the SYS block to the NEVM block, this check relates the NEVM tip to the SYS block being disconnected
+			// it is assumed disconnect will always be called on the tip and if it isn't it should reject
+			if currentNEVMMappingHash != currentHash {
+				return errors.New("deleteBlock: NEVM latest mapping hash does not match current tip")
+			}
+			err := leth.blockchain.SetHead(current.Number.Uint64() - 1)
+			if err != nil {
+				return err
+			}
 		}
 		leth.blockchain.DeleteNEVMMappings(sysBlockhash, nevmBlockhash, current.ParentHash, current.Number.Uint64())
 		return nil
